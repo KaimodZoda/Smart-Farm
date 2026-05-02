@@ -664,6 +664,35 @@
   font-weight: 600;
 }
 
+.ghost-btn.active {
+  background: #edf7f1;
+  border-color: #9ed2b4;
+  color: #176f43;
+}
+
+.zone-assignment-bar {
+  margin-top: 12px;
+  border: 1px solid #d6e3db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f8fcfa;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #4a6172;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.zone-assignment-bar select {
+  border: 1px solid #cddcd3;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #ffffff;
+  color: #153245;
+  font-weight: 700;
+}
+
 .farm-grid-preview {
   margin-top: 16px;
   padding: 8px;
@@ -672,12 +701,20 @@
   border: 1px solid #d9e7df;
   display: grid;
   gap: 4px;
+  position: relative;
+  user-select: none;
 }
 
 .grid-cell {
   aspect-ratio: 1;
   border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.9);
+  cursor: crosshair;
+  transition: box-shadow 120ms ease, filter 120ms ease;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
 }
 
 .grid-cell.zone-1 {
@@ -690,6 +727,61 @@
 
 .grid-cell.zone-3 {
   background: #d7eaf0;
+}
+
+.grid-cell.zone-4 {
+  background: #d9def8;
+}
+
+.drag-preview {
+  box-shadow: inset 0 0 0 3px #1f9355;
+  filter: brightness(0.97);
+}
+
+.drag-rect {
+  position: absolute;
+  border-radius: 4px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.drag-rect.lighting {
+  border: 3px solid #1a8f4f;
+  background: rgba(26, 143, 79, 0.15);
+}
+
+.drag-rect.irrigation {
+  border: 3px dashed #1b6fa8;
+  background: rgba(27, 111, 168, 0.14);
+}
+
+.irrigation-cell-tag {
+  border-radius: 999px;
+  padding: 1px 4px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  pointer-events: none;
+  border: 1px solid transparent;
+}
+
+.irrigation-cell-tag.iz-1 {
+  background: #e6ebf4;
+  color: #0f172a;
+  border-color: #c9d4ea;
+}
+
+.irrigation-cell-tag.iz-2 {
+  background: #f7e8df;
+  color: #7c2d12;
+  border-color: #efcfbf;
+}
+
+.irrigation-cell-tag.iz-3 {
+  background: #f7eddc;
+  color: #7a3e00;
+  border-color: #ecd6aa;
 }
 
 .preview-footer {
@@ -734,6 +826,34 @@
 
 .legend-swatch.zone-3 {
   background: #b9ddea;
+}
+
+.legend-swatch.zone-4 {
+  background: #bac5ef;
+}
+
+.legend-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.legend-tag.iz-1 {
+  background: #e6ebf4;
+  color: #0f172a;
+}
+
+.legend-tag.iz-2 {
+  background: #f7e8df;
+  color: #7c2d12;
+}
+
+.legend-tag.iz-3 {
+  background: #f7eddc;
+  color: #7a3e00;
 }
 
 .select-library-card,
@@ -1074,6 +1194,11 @@
 
   .setup-primary-actions {
     flex-direction: column;
+  }
+
+  .zone-assignment-bar {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .select-controls {

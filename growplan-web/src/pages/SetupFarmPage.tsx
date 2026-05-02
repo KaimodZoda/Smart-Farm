@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  Droplet,
   Grid3X3,
   Lightbulb,
+  Plus,
   RotateCcw,
   Settings2,
   Waves,
@@ -16,6 +18,8 @@ type SetupFarmPageProps = {
   onContinue: () => void
 }
 
+type ZoneTool = 'lighting' | 'irrigation'
+
 export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProps) {
   const [farmName, setFarmName] = useState('GreenRise Farm')
   const [farmLocation, setFarmLocation] = useState('Bangkok')
@@ -24,15 +28,132 @@ export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProp
   const [lightingZones, setLightingZones] = useState(3)
   const [irrigationZones, setIrrigationZones] = useState(2)
   const [growingSystem, setGrowingSystem] = useState('Hydroponic NFT')
+  const [activeTool, setActiveTool] = useState<ZoneTool>('lighting')
+  const [activeLightingZone, setActiveLightingZone] = useState(1)
+  const [activeIrrigationZone, setActiveIrrigationZone] = useState(1)
+  const [lightingAssignments, setLightingAssignments] = useState<number[]>([])
+  const [irrigationAssignments, setIrrigationAssignments] = useState<number[]>([])
+  const [dragStartIdx, setDragStartIdx] = useState<number | null>(null)
+  const [dragCurrentIdx, setDragCurrentIdx] = useState<number | null>(null)
 
   const totalGrids = useMemo(() => rows * columns, [rows, columns])
 
-  const gridCells = Array.from({ length: totalGrids }, (_, idx) => {
-    const rowIndex = Math.floor(idx / columns)
-    if (rowIndex < Math.ceil(rows / 3)) return 'zone-1'
-    if (rowIndex < Math.ceil((rows * 2) / 3)) return 'zone-2'
-    return 'zone-3'
-  })
+  useEffect(() => {
+    const nextLighting = Array.from({ length: totalGrids }, (_, idx) => {
+      const rowIndex = Math.floor(idx / columns)
+      return Math.min(lightingZones, Math.floor((rowIndex * lightingZones) / rows) + 1)
+    })
+    setLightingAssignments(nextLighting)
+  }, [columns, lightingZones, rows, totalGrids])
+
+  useEffect(() => {
+    const nextIrrigation = Array.from({ length: totalGrids }, (_, idx) => {
+      const colIndex = idx % columns
+      return Math.min(irrigationZones, Math.floor((colIndex * irrigationZones) / columns) + 1)
+    })
+    setIrrigationAssignments(nextIrrigation)
+  }, [columns, irrigationZones, totalGrids])
+
+  useEffect(() => {
+    setActiveLightingZone((prev) => Math.min(prev, lightingZones))
+  }, [lightingZones])
+
+  useEffect(() => {
+    setActiveIrrigationZone((prev) => Math.min(prev, irrigationZones))
+  }, [irrigationZones])
+
+  const lightingLegend = Array.from({ length: lightingZones }, (_, idx) => idx + 1)
+
+  const irrigationLegend = Array.from({ length: irrigationZones }, (_, idx) => idx + 1)
+
+  const dragRect = useMemo(() => {
+    if (dragStartIdx === null || dragCurrentIdx === null) return null
+
+    const startRow = Math.floor(dragStartIdx / columns)
+    const startCol = dragStartIdx % columns
+    const endRow = Math.floor(dragCurrentIdx / columns)
+    const endCol = dragCurrentIdx % columns
+
+    return {
+      minRow: Math.min(startRow, endRow),
+      maxRow: Math.max(startRow, endRow),
+      minCol: Math.min(startCol, endCol),
+      maxCol: Math.max(startCol, endCol),
+    }
+  }, [columns, dragCurrentIdx, dragStartIdx])
+
+  const updateZoneAssignments = (startIdx: number, endIdx: number) => {
+    const startRow = Math.floor(startIdx / columns)
+    const startCol = startIdx % columns
+    const endRow = Math.floor(endIdx / columns)
+    const endCol = endIdx % columns
+
+    const minRow = Math.min(startRow, endRow)
+    const maxRow = Math.max(startRow, endRow)
+    const minCol = Math.min(startCol, endCol)
+    const maxCol = Math.max(startCol, endCol)
+
+    const inSelection = (idx: number) => {
+      const row = Math.floor(idx / columns)
+      const col = idx % columns
+      return row >= minRow && row <= maxRow && col >= minCol && col <= maxCol
+    }
+
+    if (activeTool === 'lighting') {
+      setLightingAssignments((prev) =>
+        prev.map((zone, idx) => (inSelection(idx) ? activeLightingZone : zone)),
+      )
+      return
+    }
+
+    setIrrigationAssignments((prev) =>
+      prev.map((zone, idx) => (inSelection(idx) ? activeIrrigationZone : zone)),
+    )
+  }
+
+  const handleCellPointerDown = (idx: number) => {
+    setDragStartIdx(idx)
+    setDragCurrentIdx(idx)
+  }
+
+  const handleCellPointerEnter = (idx: number) => {
+    if (dragStartIdx === null) return
+    setDragCurrentIdx(idx)
+  }
+
+  const finalizeDrag = () => {
+    if (dragStartIdx === null || dragCurrentIdx === null) return
+    updateZoneAssignments(dragStartIdx, dragCurrentIdx)
+    setDragStartIdx(null)
+    setDragCurrentIdx(null)
+  }
+
+  const resetZones = () => {
+    const nextLighting = Array.from({ length: totalGrids }, (_, idx) => {
+      const rowIndex = Math.floor(idx / columns)
+      return Math.min(lightingZones, Math.floor((rowIndex * lightingZones) / rows) + 1)
+    })
+    const nextIrrigation = Array.from({ length: totalGrids }, (_, idx) => {
+      const colIndex = idx % columns
+      return Math.min(irrigationZones, Math.floor((colIndex * irrigationZones) / columns) + 1)
+    })
+    setLightingAssignments(nextLighting)
+    setIrrigationAssignments(nextIrrigation)
+    setDragStartIdx(null)
+    setDragCurrentIdx(null)
+  }
+
+  const isCellInDragRect = (idx: number) => {
+    if (!dragRect) return false
+    const row = Math.floor(idx / columns)
+    const col = idx % columns
+    return (
+      row >= dragRect.minRow &&
+      row <= dragRect.maxRow &&
+      col >= dragRect.minCol &&
+      col <= dragRect.maxCol
+    )
+  }
 
   return (
     <main className="setup-page">
@@ -152,40 +273,107 @@ export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProp
                 </p>
               </div>
               <div className="preview-actions">
-                <button type="button" className="ghost-btn">
-                  <Settings2 size={16} />
-                  Edit Zones
+                <button
+                  type="button"
+                  className={`ghost-btn ${activeTool === 'lighting' ? 'active' : ''}`}
+                  onClick={() => setActiveTool('lighting')}
+                >
+                  <Plus size={14} />
+                  <Lightbulb size={14} />
+                  Add Lighting Zone
                 </button>
-                <button type="button" className="ghost-btn">
+                <button
+                  type="button"
+                  className={`ghost-btn ${activeTool === 'irrigation' ? 'active' : ''}`}
+                  onClick={() => setActiveTool('irrigation')}
+                >
+                  <Plus size={14} />
+                  <Droplet size={14} />
+                  Add Irrigation Zone
+                </button>
+                <button type="button" className="ghost-btn" onClick={resetZones}>
                   <RotateCcw size={16} />
                   Reset
                 </button>
               </div>
             </header>
 
+            <div className="zone-assignment-bar">
+              {activeTool === 'lighting' ? (
+                <>
+                  <span>Assign to lighting zone:</span>
+                  <select
+                    value={activeLightingZone}
+                    onChange={(e) => setActiveLightingZone(Number(e.target.value))}
+                  >
+                    {lightingLegend.map((zone) => (
+                      <option key={zone} value={zone}>
+                        LZ {zone}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <>
+                  <span>Assign to irrigation zone:</span>
+                  <select
+                    value={activeIrrigationZone}
+                    onChange={(e) => setActiveIrrigationZone(Number(e.target.value))}
+                  >
+                    {irrigationLegend.map((zone) => (
+                      <option key={zone} value={zone}>
+                        IZ {zone}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
+
             <div
               className="farm-grid-preview"
               style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+              onPointerUp={finalizeDrag}
             >
-              {gridCells.map((zone, idx) => (
-                <span key={idx} className={`grid-cell ${zone}`}></span>
+              {Array.from({ length: totalGrids }, (_, idx) => (
+                <span
+                  key={idx}
+                  className={`grid-cell zone-${lightingAssignments[idx] ?? 1} iz-${irrigationAssignments[idx] ?? 1} ${isCellInDragRect(idx) ? 'drag-preview' : ''}`}
+                  onPointerDown={() => handleCellPointerDown(idx)}
+                  onPointerEnter={() => handleCellPointerEnter(idx)}
+                >
+                  <b className={`irrigation-cell-tag iz-${irrigationAssignments[idx] ?? 1}`}>
+                    IZ {irrigationAssignments[idx] ?? 1}
+                  </b>
+                </span>
               ))}
+
+              {dragRect ? (
+                <span
+                  className={`drag-rect ${activeTool}`}
+                  style={{
+                    top: `${(dragRect.minRow / rows) * 100}%`,
+                    left: `${(dragRect.minCol / columns) * 100}%`,
+                    width: `${((dragRect.maxCol - dragRect.minCol + 1) / columns) * 100}%`,
+                    height: `${((dragRect.maxRow - dragRect.minRow + 1) / rows) * 100}%`,
+                  }}
+                ></span>
+              ) : null}
             </div>
 
             <footer className="preview-footer">
               <div className="legend-row">
-                <span className="legend-item">
-                  <b className="legend-swatch zone-1"></b>
-                  LZ 1
-                </span>
-                <span className="legend-item">
-                  <b className="legend-swatch zone-2"></b>
-                  LZ 2
-                </span>
-                <span className="legend-item">
-                  <b className="legend-swatch zone-3"></b>
-                  LZ 3
-                </span>
+                {lightingLegend.map((zone) => (
+                  <span key={zone} className="legend-item">
+                    <b className={`legend-swatch zone-${zone}`}></b>
+                    LZ {zone}
+                  </span>
+                ))}
+                {irrigationLegend.map((zone) => (
+                  <span key={`iz-${zone}`} className="legend-item">
+                    <b className={`legend-tag iz-${zone}`}>IZ {zone}</b>
+                  </span>
+                ))}
                 <span className="legend-item">
                   <Lightbulb size={14} />
                   {lightingZones} lighting zones

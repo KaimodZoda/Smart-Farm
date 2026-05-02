@@ -31,10 +31,6 @@ const cropLibrary: Crop[] = [
   { id: 'basil', name: 'Basil', category: 'Herb', growthDays: '25-30 days', yieldPerGrid: '0.6 kg / grid', accent: '#86c56a' },
   { id: 'kale', name: 'Kale', category: 'Leafy Green', growthDays: '30-40 days', yieldPerGrid: '1.4 kg / grid', accent: '#64b95d' },
   { id: 'mint', name: 'Mint', category: 'Herb', growthDays: '25-30 days', yieldPerGrid: '0.5 kg / grid', accent: '#73d0a8' },
-  { id: 'arugula', name: 'Arugula', category: 'Leafy Green', growthDays: '20-25 days', yieldPerGrid: '0.9 kg / grid', accent: '#7ccc63' },
-  { id: 'spinach', name: 'Spinach', category: 'Leafy Green', growthDays: '28-35 days', yieldPerGrid: '1.1 kg / grid', accent: '#6ebf74' },
-  { id: 'cilantro', name: 'Cilantro', category: 'Herb', growthDays: '21-28 days', yieldPerGrid: '0.4 kg / grid', accent: '#7dcf7d' },
-  { id: 'chives', name: 'Chives', category: 'Herb', growthDays: '28-35 days', yieldPerGrid: '0.3 kg / grid', accent: '#95d17b' },
 ]
 
 export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPageProps) {
@@ -203,4 +199,3 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
     </main>
   )
 }
-
