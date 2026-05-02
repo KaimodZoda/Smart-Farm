@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import {
-  ArrowLeft,
   Grid3X3,
   Lightbulb,
   RotateCcw,
@@ -8,21 +7,16 @@ import {
   Waves,
 } from 'lucide-react'
 import { AppHeader } from '../components/AppHeader'
-import { SetupProgress, type SetupStep } from '../components/SetupProgress'
+import { SetupProgress } from '../components/SetupProgress'
+import { StepActions } from '../components/StepActions'
+import { setupSteps } from '../constants/setupSteps'
 
 type SetupFarmPageProps = {
   onBackToWelcome: () => void
+  onContinue: () => void
 }
 
-const setupSteps: SetupStep[] = [
-  { id: 1, title: 'Setup Farm', subtitle: 'Configure your farm layout' },
-  { id: 2, title: 'Select Crops', subtitle: 'Choose crops to grow' },
-  { id: 3, title: 'Define Goal', subtitle: 'Set your targets and priorities' },
-  { id: 4, title: 'Generate Plan', subtitle: 'AI will create your optimal plan' },
-  { id: 5, title: 'Confirm Plan', subtitle: 'Review and confirm your plan' },
-]
-
-export function SetupFarmPage({ onBackToWelcome }: SetupFarmPageProps) {
+export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProps) {
   const [farmName, setFarmName] = useState('GreenRise Farm')
   const [farmLocation, setFarmLocation] = useState('Bangkok')
   const [rows, setRows] = useState(10)
@@ -201,16 +195,12 @@ export function SetupFarmPage({ onBackToWelcome }: SetupFarmPageProps) {
                   {irrigationZones} irrigation zones
                 </span>
               </div>
-
-              <div className="setup-primary-actions">
-                <button type="button" className="btn btn-secondary" onClick={onBackToWelcome}>
-                  <ArrowLeft size={16} />
-                  Back to Welcome
-                </button>
-                <button type="button" className="btn btn-primary">
-                  Save & Continue
-                </button>
-              </div>
+              <StepActions
+                onBack={onBackToWelcome}
+                onNext={onContinue}
+                backLabel="Back to Welcome"
+                nextLabel="Save & Continue"
+              />
             </footer>
           </section>
         </section>

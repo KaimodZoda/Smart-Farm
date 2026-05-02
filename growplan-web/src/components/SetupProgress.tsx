@@ -1,8 +1,5 @@
-export type SetupStep = {
-  id: number
-  title: string
-  subtitle: string
-}
+import { Check } from 'lucide-react'
+import type { SetupStep } from '../constants/setupSteps'
 
 type SetupProgressProps = {
   activeStep: number
@@ -33,7 +30,7 @@ export function SetupProgress({ activeStep, steps }: SetupProgressProps) {
               key={step.id}
               className={`step-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
             >
-              <span className="step-badge">{isDone ? '✓' : step.id}</span>
+              <span className="step-badge">{isDone ? <Check size={14} /> : step.id}</span>
               <div>
                 <p>{step.title}</p>
                 <small>{step.subtitle}</small>
