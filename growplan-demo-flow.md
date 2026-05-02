@@ -218,7 +218,7 @@ Lettuce + Basil + Mint
 Optional demo variation:
 
 ```text
-Basil + Chili + Mint
+Basil + Kale + Mint
 ```
 
 Validation:
@@ -294,6 +294,7 @@ Behavior:
 
 - Show staged generation progress UI and draft preview.
 - Generate a deterministic draft plan preview from farm setup, selected crops, and per-crop goals.
+- Fill grid at 100% occupancy (no fallow cells) because empty lot is treated as lost profit.
 - Do not call the LLM here.
 
 ## Mock Rule/Layout Engine
@@ -319,14 +320,14 @@ If crops have similar water needs:
 If a crop has aggressive or spreading growth:
   place it on an edge or isolate it when possible
 
-If there is a reserve crop:
-  allocate the reserve percentage first
+Use per-crop reserve percentage:
+  adjust each crop's required allocation by its reserve factor
 
 If the priority is maximize utilization:
-  fill more grids and keep only a small buffer
+  fill all available grids (100% occupancy)
 
 If the priority is minimize stockout risk:
-  allocate more space to the target crop
+  allocate more space to high-reserve / high-priority crops while still keeping 100% occupancy
 ```
 
 Example generated plan JSON:
@@ -336,7 +337,7 @@ Example generated plan JSON:
   "planId": "greenrise-lettuce-basil-mint-8w",
   "summary": "Lettuce receives the main production zone, Basil is reserved at 20%, and Mint is edge-placed because it spreads quickly.",
   "metrics": {
-    "utilization": 94,
+    "utilization": 100,
     "stockoutRisk": "low",
     "expectedRevenue": 12400
   },

@@ -2,13 +2,22 @@ import { useState } from 'react'
 import './App.css'
 import { cropLibrary, type CropId } from './constants/crops'
 import { DefineGoalPage } from './pages/DefineGoalPage'
+import { ConfirmPlanPage } from './pages/ConfirmPlanPage'
+import { DashboardPage } from './pages/DashboardPage'
 import { GeneratePlanPage } from './pages/GeneratePlanPage'
 import { SelectCropsPage } from './pages/SelectCropsPage'
 import { SetupFarmPage } from './pages/SetupFarmPage'
 import { WelcomePage } from './pages/WelcomePage'
 import type { CropGoalsById, GoalData, SetupFarmData } from './types/planning'
 
-type Page = 'welcome' | 'setup-farm' | 'select-crops' | 'define-goal' | 'generate-plan'
+type Page =
+  | 'welcome'
+  | 'setup-farm'
+  | 'select-crops'
+  | 'define-goal'
+  | 'generate-plan'
+  | 'confirm-plan'
+  | 'dashboard'
 
 const createInitialSetupFarmData = (): SetupFarmData => ({
   farmName: 'GreenRise Farm',
@@ -49,6 +58,29 @@ function App() {
   )
   const [goalData, setGoalData] = useState<GoalData>(createInitialGoalData)
 
+  if (page === 'dashboard') {
+    return (
+      <DashboardPage
+        farm={setupFarmData}
+        selectedCropIds={selectedCropIds}
+        goalData={goalData}
+        onBackToConfirm={() => setPage('confirm-plan')}
+      />
+    )
+  }
+
+  if (page === 'confirm-plan') {
+    return (
+      <ConfirmPlanPage
+        farm={setupFarmData}
+        selectedCropIds={selectedCropIds}
+        goalData={goalData}
+        onBackToGenerate={() => setPage('generate-plan')}
+        onConfirm={() => setPage('dashboard')}
+      />
+    )
+  }
+
   if (page === 'generate-plan') {
     return (
       <GeneratePlanPage
@@ -56,7 +88,7 @@ function App() {
         selectedCropIds={selectedCropIds}
         goalData={goalData}
         onBackToDefineGoal={() => setPage('define-goal')}
-        onContinue={() => setPage('generate-plan')}
+        onContinue={() => setPage('confirm-plan')}
       />
     )
   }
