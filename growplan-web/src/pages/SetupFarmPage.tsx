@@ -1,27 +1,26 @@
 import { useMemo, useState } from 'react'
 import {
   ArrowLeft,
-  Bell,
   Grid3X3,
-  HelpCircle,
-  Leaf,
   Lightbulb,
   RotateCcw,
   Settings2,
   Waves,
 } from 'lucide-react'
+import { AppHeader } from '../components/AppHeader'
+import { SetupProgress, type SetupStep } from '../components/SetupProgress'
 
 type SetupFarmPageProps = {
   onBackToWelcome: () => void
 }
 
-const setupSteps = [
-  { id: 1, title: 'Setup Farm', subtitle: 'Configure your farm layout', state: 'active' },
-  { id: 2, title: 'Select Crops', subtitle: 'Choose crops to grow', state: 'pending' },
-  { id: 3, title: 'Define Goal', subtitle: 'Set your targets and priorities', state: 'pending' },
-  { id: 4, title: 'Generate Plan', subtitle: 'AI will create your optimal plan', state: 'pending' },
-  { id: 5, title: 'Confirm Plan', subtitle: 'Review and confirm your plan', state: 'pending' },
-] as const
+const setupSteps: SetupStep[] = [
+  { id: 1, title: 'Setup Farm', subtitle: 'Configure your farm layout' },
+  { id: 2, title: 'Select Crops', subtitle: 'Choose crops to grow' },
+  { id: 3, title: 'Define Goal', subtitle: 'Set your targets and priorities' },
+  { id: 4, title: 'Generate Plan', subtitle: 'AI will create your optimal plan' },
+  { id: 5, title: 'Confirm Plan', subtitle: 'Review and confirm your plan' },
+]
 
 export function SetupFarmPage({ onBackToWelcome }: SetupFarmPageProps) {
   const [farmName, setFarmName] = useState('GreenRise Farm')
@@ -43,48 +42,10 @@ export function SetupFarmPage({ onBackToWelcome }: SetupFarmPageProps) {
 
   return (
     <main className="setup-page">
-      <header className="setup-topbar">
-        <div className="setup-brand">
-          <div className="setup-brand-mark" aria-hidden="true">
-            <Leaf size={22} strokeWidth={2.3} />
-          </div>
-          <span>GrowPlan AI</span>
-        </div>
-
-        <div className="setup-account">
-          <button type="button" className="icon-btn" aria-label="Help">
-            <HelpCircle size={18} />
-          </button>
-          <button type="button" className="icon-btn" aria-label="Notifications">
-            <Bell size={18} />
-          </button>
-          <div className="account-chip">
-            <span className="avatar">GS</span>
-            <span>{farmName}</span>
-          </div>
-        </div>
-      </header>
+      <AppHeader accountName={farmName} accountInitials="GS" />
 
       <section className="setup-workspace">
-        <aside className="setup-sidebar">
-          <p className="setup-progress-title">Setup Progress</p>
-          <p className="setup-progress-meta">1 of 5 completed</p>
-          <div className="progress-track" aria-hidden="true">
-            <span className="progress-fill"></span>
-          </div>
-
-          <ul className="step-list">
-            {setupSteps.map((step) => (
-              <li key={step.id} className={`step-item ${step.state}`}>
-                <span className="step-badge">{step.id}</span>
-                <div>
-                  <p>{step.title}</p>
-                  <small>{step.subtitle}</small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </aside>
+        <SetupProgress activeStep={1} steps={setupSteps} />
 
         <section className="setup-main">
           <section className="setup-form-card">
@@ -257,4 +218,3 @@ export function SetupFarmPage({ onBackToWelcome }: SetupFarmPageProps) {
     </main>
   )
 }
-

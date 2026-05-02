@@ -499,6 +499,15 @@
   color: #ffffff;
 }
 
+.step-item.done .step-badge {
+  background: #1e9f5c;
+  color: #ffffff;
+}
+
+.step-item.done p {
+  color: #1f6f46;
+}
+
 .step-item p {
   margin: 0;
   font-weight: 700;
