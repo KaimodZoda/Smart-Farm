@@ -12,7 +12,7 @@ export function AppHeader({ accountName, accountInitials }: AppHeaderProps) {
         <div className="setup-brand-mark" aria-hidden="true">
           <Leaf size={22} strokeWidth={2.3} />
         </div>
-        <span>GrowPlan AI</span>
+        <span>AgriMatrix</span>
       </div>
 
       <div className="setup-account">
@@ -30,4 +30,3 @@ export function AppHeader({ accountName, accountInitials }: AppHeaderProps) {
     </header>
   )
 }
-

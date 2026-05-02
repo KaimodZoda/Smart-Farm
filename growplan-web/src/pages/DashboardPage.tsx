@@ -151,7 +151,7 @@ export function DashboardPage({
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div className="dashboard-title">
-            <h1>GrowPlan AI</h1>
+            <h1>AgriMatrix</h1>
           </div>
           <div className="dashboard-top-actions">
             <button type="button" className="icon-btn" aria-label="Notifications">
@@ -307,7 +307,7 @@ export function DashboardPage({
             </div>
 
             <label className="copilot-input">
-              <input placeholder="Ask GrowPlan AI..." />
+              <input placeholder="Ask AgriMatrix..." />
               <Send size={16} />
             </label>
 

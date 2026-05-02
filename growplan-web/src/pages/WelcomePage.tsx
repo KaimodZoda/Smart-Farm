@@ -39,7 +39,7 @@ export function WelcomePage({ onStartDemo }: WelcomePageProps) {
           <div className="brand-mark" aria-hidden="true">
             <Leaf size={26} strokeWidth={2.3} />
           </div>
-          <span className="brand-text">GrowPlan AI</span>
+          <span className="brand-text">AgriMatrix</span>
         </div>
 
         <p className="eyebrow">Welcome / Start</p>
@@ -172,11 +172,10 @@ export function WelcomePage({ onStartDemo }: WelcomePageProps) {
           <p>AI plan preview</p>
           <img
             src="/mockups/00-dashboard-overview.png"
-            alt="GrowPlan AI dashboard mockup showing grid, timeline, and AI copilot explanation"
+            alt="AgriMatrix dashboard mockup showing grid, timeline, and AI copilot explanation"
           />
         </div>
       </section>
     </main>
   )
 }
-

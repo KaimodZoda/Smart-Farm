@@ -195,7 +195,7 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
 
   const handleContinue = () => {
     onContinue({
-      farmName: farmName.trim() || 'GrowPlan Farm',
+      farmName: farmName.trim() || 'AgriMatrix Farm',
       farmLocation: farmLocation.trim() || 'Bangkok',
       rows,
       columns,

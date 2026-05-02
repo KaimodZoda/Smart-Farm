@@ -259,7 +259,7 @@ export function DefineGoalPage({
             <div className="goal-alert info">
               <p>What happens next?</p>
               <span>
-                GrowPlan AI will analyze your farm, crops, and constraints to generate an efficient
+                AgriMatrix will analyze your farm, crops, and constraints to generate an efficient
                 planting and harvest plan.
               </span>
               <Sparkles size={16} />
