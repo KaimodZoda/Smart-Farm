@@ -10,38 +10,33 @@ import {
 import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
 import { StepActions } from '../components/StepActions'
+import { cropLibrary, type CropCategory, type CropId } from '../constants/crops'
 import { setupSteps } from '../constants/setupSteps'
 
 type SelectCropsPageProps = {
+  farmName: string
+  selectedCropIds: CropId[]
   onBackToSetup: () => void
-  onContinue: () => void
+  onContinue: (selectedCropIds: CropId[]) => void
 }
 
-type Crop = {
-  id: string
-  name: string
-  category: 'Leafy Green' | 'Herb'
-  growthDays: string
-  yieldPerGrid: string
-  accent: string
-}
-
-const cropLibrary: Crop[] = [
-  { id: 'lettuce', name: 'Lettuce', category: 'Leafy Green', growthDays: '28-35 days', yieldPerGrid: '1.2 kg / grid', accent: '#9edb66' },
-  { id: 'basil', name: 'Basil', category: 'Herb', growthDays: '25-30 days', yieldPerGrid: '0.6 kg / grid', accent: '#86c56a' },
-  { id: 'kale', name: 'Kale', category: 'Leafy Green', growthDays: '30-40 days', yieldPerGrid: '1.4 kg / grid', accent: '#64b95d' },
-  { id: 'mint', name: 'Mint', category: 'Herb', growthDays: '25-30 days', yieldPerGrid: '0.5 kg / grid', accent: '#73d0a8' },
-]
-
-export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPageProps) {
+export function SelectCropsPage({
+  farmName,
+  selectedCropIds: initialSelectedCropIds,
+  onBackToSetup,
+  onContinue,
+}: SelectCropsPageProps) {
   const [query, setQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<'All' | Crop['category']>('All')
-  const [selectedCropIds, setSelectedCropIds] = useState<string[]>([
-    'lettuce',
-    'basil',
-    'kale',
-    'mint',
-  ])
+  const [categoryFilter, setCategoryFilter] = useState<'All' | CropCategory>('All')
+  const [selectedCropIds, setSelectedCropIds] = useState<CropId[]>(initialSelectedCropIds)
+  const accountInitials =
+    farmName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('')
+      .slice(0, 2) || 'GF'
 
   const visibleCrops = useMemo(() => {
     return cropLibrary.filter((crop) => {
@@ -56,23 +51,23 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
   }, [selectedCropIds])
 
   const totalEstimatedYield = useMemo(() => {
-    const value = selectedCrops.reduce((acc, crop) => acc + Number.parseFloat(crop.yieldPerGrid), 0)
+    const value = selectedCrops.reduce((acc, crop) => acc + crop.yieldPerGrid, 0)
     return value.toFixed(1)
   }, [selectedCrops])
 
-  const toggleCrop = (cropId: string) => {
+  const toggleCrop = (cropId: CropId) => {
     setSelectedCropIds((prev) =>
       prev.includes(cropId) ? prev.filter((id) => id !== cropId) : [...prev, cropId],
     )
   }
 
-  const removeCrop = (cropId: string) => {
+  const removeCrop = (cropId: CropId) => {
     setSelectedCropIds((prev) => prev.filter((id) => id !== cropId))
   }
 
   return (
     <main className="setup-page">
-      <AppHeader accountName="Indoor Farm 01" accountInitials="AM" />
+      <AppHeader accountName={farmName} accountInitials={accountInitials} />
 
       <section className="setup-workspace">
         <SetupProgress activeStep={2} steps={setupSteps} />
@@ -96,7 +91,7 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
 
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value as 'All' | Crop['category'])}
+                onChange={(e) => setCategoryFilter(e.target.value as 'All' | CropCategory)}
               >
                 <option value="All">All Categories</option>
                 <option value="Leafy Green">Leafy Green</option>
@@ -122,7 +117,7 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
                     </p>
                     <p>
                       <Grid3X3 size={14} />
-                      {crop.yieldPerGrid}
+                      {crop.yieldPerGrid.toFixed(1)} kg / grid
                     </p>
 
                     <button
@@ -160,7 +155,7 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
                       {crop.growthDays}
                       <span className="dot-sep">|</span>
                       <Grid3X3 size={12} />
-                      {crop.yieldPerGrid}
+                      {crop.yieldPerGrid.toFixed(1)} kg / grid
                     </p>
                   </div>
                   <button
@@ -188,7 +183,7 @@ export function SelectCropsPage({ onBackToSetup, onContinue }: SelectCropsPagePr
 
             <StepActions
               onBack={onBackToSetup}
-              onNext={onContinue}
+              onNext={() => onContinue(selectedCropIds)}
               backLabel="Back"
               nextLabel="Continue"
               nextDisabled={selectedCrops.length === 0}

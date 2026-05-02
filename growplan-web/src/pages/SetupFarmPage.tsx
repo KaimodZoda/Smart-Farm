@@ -12,47 +12,91 @@ import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
 import { StepActions } from '../components/StepActions'
 import { setupSteps } from '../constants/setupSteps'
+import type { SetupFarmData } from '../types/planning'
 
 type SetupFarmPageProps = {
+  initialData: SetupFarmData
   onBackToWelcome: () => void
-  onContinue: () => void
+  onContinue: (data: SetupFarmData) => void
 }
 
 type ZoneTool = 'lighting' | 'irrigation'
 
-export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProps) {
-  const [farmName, setFarmName] = useState('GreenRise Farm')
-  const [farmLocation, setFarmLocation] = useState('Bangkok')
-  const [rows, setRows] = useState(10)
-  const [columns, setColumns] = useState(12)
-  const [lightingZones, setLightingZones] = useState(3)
-  const [irrigationZones, setIrrigationZones] = useState(2)
-  const [growingSystem, setGrowingSystem] = useState('Hydroponic NFT')
+const createDefaultLightingAssignments = (rows: number, columns: number, lightingZones: number) => {
+  const totalGrids = rows * columns
+  return Array.from({ length: totalGrids }, (_, idx) => {
+    const rowIndex = Math.floor(idx / columns)
+    return Math.min(lightingZones, Math.floor((rowIndex * lightingZones) / rows) + 1)
+  })
+}
+
+const createDefaultIrrigationAssignments = (
+  rows: number,
+  columns: number,
+  irrigationZones: number,
+) => {
+  const totalGrids = rows * columns
+  return Array.from({ length: totalGrids }, (_, idx) => {
+    const colIndex = idx % columns
+    return Math.min(irrigationZones, Math.floor((colIndex * irrigationZones) / columns) + 1)
+  })
+}
+
+export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: SetupFarmPageProps) {
+  const [farmName, setFarmName] = useState(initialData.farmName)
+  const [farmLocation, setFarmLocation] = useState(initialData.farmLocation)
+  const [rows, setRows] = useState(initialData.rows)
+  const [columns, setColumns] = useState(initialData.columns)
+  const [lightingZones, setLightingZones] = useState(initialData.lightingZones)
+  const [irrigationZones, setIrrigationZones] = useState(initialData.irrigationZones)
+  const [growingSystem, setGrowingSystem] = useState(initialData.growingSystem)
   const [activeTool, setActiveTool] = useState<ZoneTool>('lighting')
   const [activeLightingZone, setActiveLightingZone] = useState(1)
   const [activeIrrigationZone, setActiveIrrigationZone] = useState(1)
-  const [lightingAssignments, setLightingAssignments] = useState<number[]>([])
-  const [irrigationAssignments, setIrrigationAssignments] = useState<number[]>([])
+  const [lightingAssignments, setLightingAssignments] = useState<number[]>(() => {
+    const totalGrids = initialData.rows * initialData.columns
+    if (initialData.lightingAssignments.length === totalGrids) {
+      return initialData.lightingAssignments.map((zone) =>
+        Math.min(Math.max(zone, 1), initialData.lightingZones),
+      )
+    }
+    return createDefaultLightingAssignments(initialData.rows, initialData.columns, initialData.lightingZones)
+  })
+  const [irrigationAssignments, setIrrigationAssignments] = useState<number[]>(() => {
+    const totalGrids = initialData.rows * initialData.columns
+    if (initialData.irrigationAssignments.length === totalGrids) {
+      return initialData.irrigationAssignments.map((zone) =>
+        Math.min(Math.max(zone, 1), initialData.irrigationZones),
+      )
+    }
+    return createDefaultIrrigationAssignments(
+      initialData.rows,
+      initialData.columns,
+      initialData.irrigationZones,
+    )
+  })
   const [dragStartIdx, setDragStartIdx] = useState<number | null>(null)
   const [dragCurrentIdx, setDragCurrentIdx] = useState<number | null>(null)
 
   const totalGrids = useMemo(() => rows * columns, [rows, columns])
 
   useEffect(() => {
-    const nextLighting = Array.from({ length: totalGrids }, (_, idx) => {
-      const rowIndex = Math.floor(idx / columns)
-      return Math.min(lightingZones, Math.floor((rowIndex * lightingZones) / rows) + 1)
+    setLightingAssignments((prev) => {
+      if (prev.length !== totalGrids) {
+        return createDefaultLightingAssignments(rows, columns, lightingZones)
+      }
+      return prev.map((zone) => Math.min(Math.max(zone, 1), lightingZones))
     })
-    setLightingAssignments(nextLighting)
   }, [columns, lightingZones, rows, totalGrids])
 
   useEffect(() => {
-    const nextIrrigation = Array.from({ length: totalGrids }, (_, idx) => {
-      const colIndex = idx % columns
-      return Math.min(irrigationZones, Math.floor((colIndex * irrigationZones) / columns) + 1)
+    setIrrigationAssignments((prev) => {
+      if (prev.length !== totalGrids) {
+        return createDefaultIrrigationAssignments(rows, columns, irrigationZones)
+      }
+      return prev.map((zone) => Math.min(Math.max(zone, 1), irrigationZones))
     })
-    setIrrigationAssignments(nextIrrigation)
-  }, [columns, irrigationZones, totalGrids])
+  }, [columns, irrigationZones, rows, totalGrids])
 
   useEffect(() => {
     setActiveLightingZone((prev) => Math.min(prev, lightingZones))
@@ -129,14 +173,8 @@ export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProp
   }
 
   const resetZones = () => {
-    const nextLighting = Array.from({ length: totalGrids }, (_, idx) => {
-      const rowIndex = Math.floor(idx / columns)
-      return Math.min(lightingZones, Math.floor((rowIndex * lightingZones) / rows) + 1)
-    })
-    const nextIrrigation = Array.from({ length: totalGrids }, (_, idx) => {
-      const colIndex = idx % columns
-      return Math.min(irrigationZones, Math.floor((colIndex * irrigationZones) / columns) + 1)
-    })
+    const nextLighting = createDefaultLightingAssignments(rows, columns, lightingZones)
+    const nextIrrigation = createDefaultIrrigationAssignments(rows, columns, irrigationZones)
     setLightingAssignments(nextLighting)
     setIrrigationAssignments(nextIrrigation)
     setDragStartIdx(null)
@@ -155,9 +193,31 @@ export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProp
     )
   }
 
+  const handleContinue = () => {
+    onContinue({
+      farmName: farmName.trim() || 'GrowPlan Farm',
+      farmLocation: farmLocation.trim() || 'Bangkok',
+      rows,
+      columns,
+      lightingZones,
+      irrigationZones,
+      growingSystem,
+      lightingAssignments,
+      irrigationAssignments,
+    })
+  }
+
+  const accountInitials = farmName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+    .slice(0, 2) || 'GF'
+
   return (
     <main className="setup-page">
-      <AppHeader accountName={farmName} accountInitials="GS" />
+      <AppHeader accountName={farmName} accountInitials={accountInitials} />
 
       <section className="setup-workspace">
         <SetupProgress activeStep={1} steps={setupSteps} />
@@ -385,7 +445,7 @@ export function SetupFarmPage({ onBackToWelcome, onContinue }: SetupFarmPageProp
               </div>
               <StepActions
                 onBack={onBackToWelcome}
-                onNext={onContinue}
+                onNext={handleContinue}
                 backLabel="Back to Welcome"
                 nextLabel="Save & Continue"
               />
