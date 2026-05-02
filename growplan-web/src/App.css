@@ -102,6 +102,16 @@
   background: var(--brand-strong);
 }
 
+.btn-secondary {
+  border-color: #c6d7cf;
+  background: #ffffff;
+  color: #2f495b;
+}
+
+.btn-secondary:hover {
+  background: #f3f8f5;
+}
+
 .value-row {
   margin-top: 36px;
   display: flex;
@@ -665,6 +675,12 @@
   margin-top: 16px;
 }
 
+.setup-primary-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .legend-row {
   display: flex;
   flex-wrap: wrap;
@@ -774,6 +790,10 @@
   }
 
   .setup-preview-card header {
+    flex-direction: column;
+  }
+
+  .setup-primary-actions {
     flex-direction: column;
   }
 }
