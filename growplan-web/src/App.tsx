@@ -1,12 +1,4 @@
-import {
-  Cpu,
-  Grid3X3,
-  Leaf,
-  Play,
-  ShieldCheck,
-  Sparkles,
-  Sprout,
-} from 'lucide-react'
+import { Cpu, Grid3X3, Leaf, ShieldCheck, Sparkles, Sprout } from 'lucide-react'
 import './App.css'
 
 const previewCells = [
@@ -59,11 +51,7 @@ function App() {
         <div className="cta-row">
           <button type="button" className="btn btn-primary">
             <Sprout size={20} />
-            Start Planning
-          </button>
-          <button type="button" className="btn btn-ghost">
-            <Play size={18} />
-            View Demo
+            Start Demo
           </button>
         </div>
 
@@ -178,7 +166,7 @@ function App() {
         </footer>
 
         <div className="ai-preview">
-          <p>AI explanation preview</p>
+          <p>AI plan preview</p>
           <img
             src="/mockups/00-dashboard-overview.png"
             alt="GrowPlan AI dashboard mockup showing grid, timeline, and AI copilot explanation"
