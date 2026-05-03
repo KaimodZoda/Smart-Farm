@@ -69,6 +69,13 @@ export function DefineGoalPage({
       exceeded: requiredGridPerWeek > availableCapacityPerWeek,
     }
   }, [availableCapacityPerWeek, cropGoals, selectedCrops])
+  const capacityUsagePercent = useMemo(() => {
+    if (capacityState.availableCapacityPerWeek === 0) return 0
+    return Math.round(
+      (capacityState.requiredGridPerWeek / capacityState.availableCapacityPerWeek) * 100,
+    )
+  }, [capacityState.availableCapacityPerWeek, capacityState.requiredGridPerWeek])
+  const capacityBarPercent = Math.min(100, capacityUsagePercent)
 
   const planPreview = useMemo(
     () =>
@@ -101,7 +108,13 @@ export function DefineGoalPage({
     )
   }, [farm.nurseryCapacity, planPreview.nurseryLoad])
 
-  const getMaxTargetForCrop = (cropId: CropId, goals: CropGoalsById) => {
+  const getMaxTargetForCrop = (cropId: CropId) => {
+    const crop = selectedCropById.get(cropId)
+    if (!crop) return 0
+    return Math.max(0, Math.floor(availableCapacityPerWeek * crop.yieldPerGrid))
+  }
+
+  const getRemainingMaxTargetForCrop = (cropId: CropId, goals: CropGoalsById) => {
     const crop = selectedCropById.get(cropId)
     if (!crop) return 0
     const reserve = goals[cropId]?.reservePercent ?? 0
@@ -118,41 +131,51 @@ export function DefineGoalPage({
     return Math.max(0, Math.floor((remainingCapacity * crop.yieldPerGrid) / multiplier))
   }
 
+  const getMaxReserveForCrop = (cropId: CropId, goals: CropGoalsById) => {
+    const crop = selectedCropById.get(cropId)
+    if (!crop) return 0
+
+    const target = goals[cropId]?.targetPerWeek ?? 0
+    if (target <= 0) return 50
+
+    const requiredWithoutCrop = selectedCrops.reduce((total, selectedCrop) => {
+      if (selectedCrop.id === cropId) return total
+      const selectedTarget = goals[selectedCrop.id]?.targetPerWeek ?? 0
+      const selectedReserve = goals[selectedCrop.id]?.reservePercent ?? 0
+      return total + (selectedTarget * (1 + selectedReserve / 100)) / selectedCrop.yieldPerGrid
+    }, 0)
+
+    const remainingCapacity = Math.max(0, availableCapacityPerWeek - requiredWithoutCrop)
+    const maxReserve = ((remainingCapacity * crop.yieldPerGrid) / target - 1) * 100
+    return Math.min(50, Math.max(0, Math.floor(maxReserve)))
+  }
+
   const updateTarget = (cropId: CropId, nextValue: number) => {
     const desiredTarget = Math.max(0, nextValue || 0)
     setCropGoals((prev) => {
-      const maxTarget = getMaxTargetForCrop(cropId, prev)
-      const safeTarget = Math.min(desiredTarget, maxTarget)
+      const maxTarget = getRemainingMaxTargetForCrop(cropId, prev)
       return {
         ...prev,
         [cropId]: {
           ...prev[cropId],
-          targetPerWeek: safeTarget,
+          targetPerWeek: Math.min(desiredTarget, maxTarget),
         },
       }
     })
   }
 
   const updateReserve = (cropId: CropId, nextValue: number) => {
-    const safeReserve = Math.min(50, Math.max(0, nextValue || 0))
+    const desiredReserve = Math.max(0, nextValue || 0)
     setCropGoals((prev) => {
-      const nextGoals = {
+      const maxReserve = getMaxReserveForCrop(cropId, prev)
+      const safeReserve = Math.min(desiredReserve, maxReserve)
+      return {
         ...prev,
         [cropId]: {
           ...prev[cropId],
           reservePercent: safeReserve,
         },
       }
-
-      const maxTarget = getMaxTargetForCrop(cropId, nextGoals)
-      if ((nextGoals[cropId]?.targetPerWeek ?? 0) > maxTarget) {
-        nextGoals[cropId] = {
-          ...nextGoals[cropId],
-          targetPerWeek: maxTarget,
-        }
-      }
-
-      return nextGoals
     })
   }
 
@@ -193,7 +216,9 @@ export function DefineGoalPage({
               <div className="crop-goal-list">
                 {selectedCrops.map((crop) => {
                   const config = cropGoals[crop.id]
-                  const maxTarget = getMaxTargetForCrop(crop.id, cropGoals)
+                  const maxTarget = getMaxTargetForCrop(crop.id)
+                  const remainingMaxTarget = getRemainingMaxTargetForCrop(crop.id, cropGoals)
+                  const maxReserve = getMaxReserveForCrop(crop.id, cropGoals)
 
                   return (
                     <article key={crop.id} className="crop-goal-item">
@@ -209,18 +234,28 @@ export function DefineGoalPage({
 
                       <div className="goal-input-row">
                         <label>
-                          Goal / week (kg)
+                          <span className="goal-slider-head">
+                            Goal / week
+                            <strong>{config.targetPerWeek} kg</strong>
+                          </span>
                           <input
-                            type="number"
+                            type="range"
                             min={0}
                             max={maxTarget}
+                            step={1}
                             value={config.targetPerWeek}
                             onChange={(event) => updateTarget(crop.id, Number(event.target.value))}
                           />
-                          <small>Max by capacity: {maxTarget} kg/week</small>
+                          <span className="goal-slider-scale">
+                            <small>0 kg</small>
+                            <small>Available {remainingMaxTarget} kg/week</small>
+                          </span>
                         </label>
                         <label>
-                          Reserve ({config.reservePercent}%)
+                          <span className="goal-slider-head">
+                            Reserve
+                            <strong>{config.reservePercent}%</strong>
+                          </span>
                           <input
                             type="range"
                             min={0}
@@ -229,6 +264,10 @@ export function DefineGoalPage({
                             value={config.reservePercent}
                             onChange={(event) => updateReserve(crop.id, Number(event.target.value))}
                           />
+                          <span className="goal-slider-scale">
+                            <small>0%</small>
+                            <small>Available up to {maxReserve}%</small>
+                          </span>
                         </label>
                       </div>
 
@@ -337,6 +376,18 @@ export function DefineGoalPage({
                   ? 'Capacity constraints detected'
                   : 'Capacity is within range'}
               </p>
+              <div className="capacity-progress" aria-label="Farm capacity usage">
+                <div className="capacity-progress-meta">
+                  <strong>{capacityUsagePercent}% used</strong>
+                  <span>{capacityState.availableCapacityPerWeek} grids/week capacity</span>
+                </div>
+                <div className="capacity-progress-track">
+                  <div
+                    className="capacity-progress-fill"
+                    style={{ width: `${capacityBarPercent}%` }}
+                  />
+                </div>
+              </div>
               <span>
                 Required ~{capacityState.requiredGridPerWeek.toFixed(0)} grids/week vs available{' '}
                 {capacityState.availableCapacityPerWeek} grids/week.

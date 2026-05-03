@@ -171,7 +171,7 @@ export function WelcomePage({ onStartDemo }: WelcomePageProps) {
         <div className="ai-preview">
           <p>AI plan preview</p>
           <img
-            src="/mockups/00-dashboard-overview.png"
+            src="/growplan-web/src/assets/dashboard.png"
             alt="AgriMatrix dashboard mockup showing grid, timeline, and AI copilot explanation"
           />
         </div>

@@ -1212,23 +1212,38 @@
   font-weight: 700;
 }
 
-.goal-input-row input[type='number'] {
-  border: 1px solid #cedcd4;
-  border-radius: 8px;
-  height: 40px;
-  padding: 0 12px;
-  color: #163043;
-  outline: none;
-}
-
-.goal-input-row input[type='number']:focus {
-  border-color: #1ea15c;
-  box-shadow: 0 0 0 3px rgba(30, 161, 92, 0.15);
-}
-
 .goal-input-row input[type='range'] {
   width: 100%;
   accent-color: #108749;
+}
+
+.goal-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.goal-slider-head strong {
+  min-width: 72px;
+  border-radius: 8px;
+  padding: 5px 8px;
+  background: #edf8f1;
+  color: #0e7743;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.goal-slider-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #667d8d;
+}
+
+.goal-slider-scale small {
+  font-weight: 600;
 }
 
 .goal-derived-row {
@@ -1434,6 +1449,48 @@
   margin-top: 6px;
   display: block;
   color: #4f6475;
+}
+
+.capacity-progress {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.capacity-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.capacity-progress-meta strong {
+  color: #173247;
+  font-size: 1rem;
+}
+
+.capacity-progress-meta span {
+  margin: 0;
+  color: #5c7081;
+  font-size: 0.82rem;
+}
+
+.capacity-progress-track {
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: #dce9e1;
+}
+
+.capacity-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #12914f;
+  transition: width 180ms ease;
+}
+
+.goal-alert.warning .capacity-progress-fill {
+  background: #d17a14;
 }
 
 .goal-alert.warning {
