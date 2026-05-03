@@ -17,20 +17,15 @@ import {
   Waves,
 } from 'lucide-react'
 import { cropLibrary, type CropId } from '../constants/crops'
-import type { GoalData, SetupFarmData } from '../types/planning'
+import { generatePlanData } from '../lib/planGenerator'
+import type { GeneratedPlanData, GoalData, SetupFarmData } from '../types/planning'
 
 type DashboardPageProps = {
   farm: SetupFarmData
   selectedCropIds: CropId[]
   goalData: GoalData
+  generatedPlan: GeneratedPlanData | null
   onBackToConfirm: () => void
-}
-
-const pricePerKgByCrop: Record<CropId, number> = {
-  lettuce: 2.2,
-  basil: 3.8,
-  kale: 2.7,
-  mint: 3.2,
 }
 
 const sideItems = [
@@ -56,6 +51,7 @@ export function DashboardPage({
   farm,
   selectedCropIds,
   goalData,
+  generatedPlan,
   onBackToConfirm,
 }: DashboardPageProps) {
   const selectedCrops = useMemo(
@@ -63,33 +59,16 @@ export function DashboardPage({
     [selectedCropIds],
   )
 
-  const stats = useMemo(() => {
-    const available = farm.rows * farm.columns
-    const required = selectedCrops.reduce((total, crop) => {
-      const target = goalData.cropGoals[crop.id]?.targetPerWeek ?? 0
-      const reserve = goalData.cropGoals[crop.id]?.reservePercent ?? 0
-      return total + (target * (1 + reserve / 100)) / crop.yieldPerGrid
-    }, 0)
-    const utilization = Math.max(35, Math.min(100, Math.round((required / available) * 100)))
-    const revenue = selectedCrops.reduce((sum, crop) => {
-      const target = goalData.cropGoals[crop.id]?.targetPerWeek ?? 0
-      return sum + target * pricePerKgByCrop[crop.id]
-    }, 0)
-    const reserveAvg =
-      selectedCrops.length === 0
-        ? 0
-        : Math.round(
-            selectedCrops.reduce(
-              (sum, crop) => sum + (goalData.cropGoals[crop.id]?.reservePercent ?? 0),
-              0,
-            ) / selectedCrops.length,
-          )
-    return {
-      utilization,
-      revenue: revenue * 4,
-      stockoutRisk: reserveAvg >= 18 ? 'Low' : reserveAvg >= 12 ? 'Medium' : 'High',
-    }
-  }, [farm.columns, farm.rows, goalData.cropGoals, selectedCrops])
+  const resolvedPlan = useMemo(
+    () =>
+      generatedPlan ??
+      generatePlanData({
+        farm,
+        selectedCropIds,
+        goalData,
+      }),
+    [farm, generatedPlan, goalData, selectedCropIds],
+  )
 
   const accountInitials =
     farm.farmName
@@ -104,15 +83,16 @@ export function DashboardPage({
   const primaryGoal = primaryCrop ? goalData.cropGoals[primaryCrop.id]?.targetPerWeek ?? 0 : 0
 
   const gridCells = useMemo(() => {
-    return Array.from({ length: 100 }, (_, idx) => {
-      const crop = selectedCrops[idx % Math.max(selectedCrops.length, 1)]
+    return resolvedPlan.cells.map((cell) => {
+      const crop = cropLibrary.find((item) => item.id === cell.cropId)
       return {
-        cropId: crop?.id ?? 'lettuce',
-        name: crop?.name ?? 'Crop',
-        color: crop?.accent ?? '#dfe5e2',
+        cropId: cell.cropId,
+        name: cell.label,
+        color: cell.color,
+        category: crop?.category ?? 'Leafy Green',
       }
     })
-  }, [selectedCrops])
+  }, [resolvedPlan.cells])
 
   const cropMix = useMemo(() => {
     const total = gridCells.length
@@ -170,21 +150,21 @@ export function DashboardPage({
         <section className="dashboard-kpis">
           <article>
             <p>Utilization</p>
-            <strong>{stats.utilization}%</strong>
+            <strong>{resolvedPlan.utilizationPercent}%</strong>
           </article>
           <article>
             <p>Expected revenue</p>
-            <strong>${(stats.revenue / 1000).toFixed(1)}k</strong>
+            <strong>${(resolvedPlan.expectedRevenue / 1000).toFixed(1)}k</strong>
           </article>
           <article>
             <p>Stockout risk</p>
-            <strong>{stats.stockoutRisk}</strong>
+            <strong>{resolvedPlan.stockoutRisk}</strong>
           </article>
           <article className="goal-kpi">
             <p>
               Goal: {primaryGoal} kg {primaryCrop?.name.toLowerCase() ?? 'crop'} / week
             </p>
-            <span>{Math.max(78, Math.min(97, stats.utilization - 3))}% target progress</span>
+            <span>{Math.max(78, Math.min(97, resolvedPlan.utilizationPercent - 3))}% target progress</span>
           </article>
           <article className="risk-kpi">
             <p>Risk: lettuce delay +5 days</p>
@@ -197,10 +177,13 @@ export function DashboardPage({
             <section className="dashboard-grid-card">
               <header>
                 <h2>Farm Grid</h2>
-                <span>{farm.rows}x{farm.columns}</span>
+                <span>{resolvedPlan.rows}x{resolvedPlan.columns}</span>
               </header>
               <div className="dashboard-grid-layout">
-                <div className="dashboard-grid">
+                <div
+                  className="dashboard-grid"
+                  style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, 34px)` }}
+                >
                   {gridCells.map((cell, idx) => (
                     <span
                       key={idx}

@@ -26,3 +26,20 @@ export type GoalData = {
   priority: GoalPriority
   cropGoals: CropGoalsById
 }
+
+export type GeneratedPlanCell = {
+  cropId: CropId
+  color: string
+  label: string
+}
+
+export type GeneratedPlanData = {
+  rows: number
+  columns: number
+  cells: GeneratedPlanCell[]
+  utilizationPercent: number
+  requiredCapacity: number
+  availableCapacity: number
+  stockoutRisk: 'Low' | 'Medium' | 'High'
+  expectedRevenue: number
+}

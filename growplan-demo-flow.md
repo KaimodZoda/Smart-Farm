@@ -1,4 +1,4 @@
-# GrowPlan AI Demo Flow
+# AgriMatrix Demo Flow
 
 ## Demo Goal
 
@@ -16,24 +16,24 @@ Welcome
 
 Current implementation status:
 
-- Done: Welcome -> Setup Farm -> Select Crops -> Define Goal -> Generate Plan
-- Next: Confirm Plan -> Dashboard / Re-plan
+- Done: Welcome -> Setup Farm -> Select Crops -> Define Goal -> Generate Plan -> Confirm Plan -> Dashboard
+- Next: tighten plan logic, polish dashboard, and wire template re-plan behavior
 
-The wizard should feel stable and deterministic. The LLM response should appear only in the Dashboard / Re-plan experience, after the system has already generated and confirmed a plan.
+The wizard should feel stable and deterministic. The demo Copilot should appear only in the Dashboard / Re-plan experience, after the system has already generated and confirmed a plan.
 
 ## Core Product Idea
 
-GrowPlan AI helps a controlled-farm operator turn farm setup, selected crops, and production goals into an actionable planting layout. The planning flow creates the plan with deterministic rules. The AI Copilot then explains the confirmed plan and supports re-planning when constraints change.
+AgriMatrix helps a controlled-farm operator turn farm setup, nursery capacity, selected crops, and production goals into an actionable planting layout. The planning flow creates the plan with deterministic rules. The demo Copilot then explains the confirmed plan and supports re-planning when constraints change.
 
 Main message:
 
-> GrowPlan AI creates a clear planting plan first, then lets operators ask why the plan works or how to adapt it when real conditions change.
+> AgriMatrix creates a clear planting and seedling schedule first, then lets operators ask why the plan works or how to adapt it when real conditions change.
 
-## LLM Scope
+## Demo Copilot Scope
 
-Use the LLM only in the Dashboard / Re-plan page.
+For the 2-day demo, do not use a live LLM. Use pre-defined prompt chips and plan-aware template responses only.
 
-Do not call the LLM during:
+Do not show or run the Copilot during:
 
 - Setup Farm
 - Select Crops
@@ -43,7 +43,7 @@ Do not call the LLM during:
 
 Those pages should use local state, deterministic rule/layout logic, and template copy so the demo remains fast and reliable.
 
-Use the LLM for:
+Show pre-defined Copilot prompts in Dashboard / Re-plan for:
 
 - Why this layout?
 - Explain risk
@@ -52,20 +52,40 @@ Use the LLM for:
 - What if I can water only every other day?
 - Incident response, such as lettuce delayed by 5 days
 
+Recommended demo prompt chips:
+
+- Why is Mint placed at the edge?
+- Why is this plan 100% utilized?
+- What is the seedling capacity risk?
+- What should I seed next week?
+- What if Lettuce is delayed by 5 days?
+- Show me a safer plan
+
+Each prompt should map to a deterministic template response that references the current generated plan, reason tags, nursery schedule, and incident state.
+
 ## Source of Truth
 
 The rule/layout engine is the source of truth.
 
-The LLM should receive:
+Current app behavior:
+
+- `Generate Plan` produces one deterministic generated-plan object
+- `Confirm Plan` reads that same generated plan
+- `Dashboard` reads that same generated plan
+- Grid layout, crop mix, utilization, revenue, and stockout risk are intended to stay in sync across these pages
+- Nursery schedule, transplant timing, and seedling capacity risk should stay in sync with the generated plan
+
+The demo Copilot templates should receive:
 
 - Farm setup
 - Selected crop attributes
 - Defined goal
 - Generated plan JSON
+- Nursery / seedling schedule
 - Reason tags from the rule/layout engine
 - Current dashboard incident or user question
 
-The LLM should not invent a new layout. If re-planning is needed, the app should convert the request into structured constraints, run the rule/layout engine again, and then let the LLM explain the updated plan.
+The demo Copilot should not invent a new layout. If re-planning is needed, the app should convert the selected scenario into structured constraints, run the rule/layout engine again, and then show a template explanation for the updated plan.
 
 ## Recommended Tech Stack
 
@@ -75,8 +95,8 @@ The LLM should not invent a new layout. If re-planning is needed, the app should
 - Plain CSS or CSS modules
 - lucide-react for icons
 - Mock rule/layout engine in frontend
-- Gemini 2.5 Flash for Dashboard / Re-plan explanation
-- Template fallback if the LLM API fails or hits a rate limit
+- Template Copilot for Dashboard / Re-plan explanation
+- Optional LLM upgrade later, after the rule engine and data contracts are stable
 
 ## Plant Catalog
 
@@ -125,17 +145,27 @@ Welcome / Start
 -> Dashboard / Re-plan
 ```
 
+## Seedling / Nursery Strategy
+
+Do not add a separate nursery page for the 2-day demo. Treat the nursery as a farm resource that affects the plan:
+
+- Setup Farm captures nursery capacity and seedling lead time.
+- Define Goal derives estimated seedlings needed per week from target, reserve, and yield per plant.
+- Generate Plan creates both grid allocation and seedling schedule.
+- Confirm Plan lets the user review transplant timing before starting.
+- Dashboard shows nursery queue, ready-to-transplant batches, next seeding batch, and capacity risk.
+
 ## Page 1: Welcome / Start
 
 Purpose:
 
-Introduce GrowPlan AI and start the demo.
+Introduce AgriMatrix and start the demo.
 
 Main UI:
 
-- Product name: GrowPlan AI
+- Product name: AgriMatrix
 - Headline: Smart planting layouts for controlled farms
-- Subheadline: Set up your farm, choose crops, generate a plan, then use AI to explain and re-plan after confirmation.
+- Subheadline: Set up your farm, choose crops, generate a plan, then use Copilot prompts to explain and re-plan after confirmation.
 - Primary CTA: Start Demo
 - Visual preview:
   - Farm grid preview
@@ -150,7 +180,7 @@ User action:
 
 Purpose:
 
-Capture the growing space before the user chooses crops.
+Capture the growing space and seedling capacity before the user chooses crops.
 
 Main UI:
 
@@ -162,8 +192,11 @@ Main UI:
 - Total grids
 - Lighting zones
 - Irrigation zones
+- Nursery trays / seedling capacity
+- Seedling days before transplant
 - Growing system
 - Farm layout preview
+- Small nursery capacity preview
 - CTA: Save & Continue
 
 Recommended defaults:
@@ -176,6 +209,8 @@ Columns: 12
 Total grids: 120
 Lighting zones: 3
 Irrigation zones: 2
+Nursery capacity: 240 seedlings
+Seedling lead time: 14 days before transplant
 Growing system: Hydroponic NFT
 ```
 
@@ -190,6 +225,8 @@ Example farm setup JSON:
   "totalGrids": 120,
   "lightingZones": 3,
   "irrigationZones": 2,
+  "nurseryCapacity": 240,
+  "seedlingDaysBeforeTransplant": 14,
   "growingSystem": "Hydroponic NFT"
 }
 ```
@@ -238,6 +275,7 @@ Main UI:
 - Per-selected-crop goal inputs
   - Goal per week (kg)
   - Reserve percentage (%)
+- Estimated seedlings needed per week
 - Planning horizon
 - Optimization priority segmented control
 - Goal summary panel
@@ -252,6 +290,7 @@ Kale: 160 kg/week, reserve 12%
 Mint: 90 kg/week, reserve 18%
 Planning horizon: 8 weeks
 Optimization priority: Maximize space utilization
+Seedling estimates: derived from target, reserve, and crop yield per plant
 ```
 
 Example goal JSON:
@@ -265,6 +304,12 @@ Example goal JSON:
     "basil": { "targetPerWeek": 120, "reservePercent": 20 },
     "kale": { "targetPerWeek": 160, "reservePercent": 12 },
     "mint": { "targetPerWeek": 90, "reservePercent": 18 }
+  },
+  "seedlingAssumptions": {
+    "lettuce": { "yieldPerPlantKg": 0.18, "seedlingDays": 14 },
+    "basil": { "yieldPerPlantKg": 0.08, "seedlingDays": 14 },
+    "kale": { "yieldPerPlantKg": 0.16, "seedlingDays": 18 },
+    "mint": { "yieldPerPlantKg": 0.05, "seedlingDays": 14 }
   }
 }
 ```
@@ -283,10 +328,12 @@ Main UI:
   - Analyzing farm layout
   - Balancing crop cycles
   - Optimizing grid allocation
+  - Scheduling seedling batches
   - Forecasting harvest schedule
 - Draft plan preview
 - Mini grid allocation
 - Mini harvest timeline
+- Mini nursery schedule
 - KPI preview
 - CTA: View Draft Plan
 
@@ -295,7 +342,9 @@ Behavior:
 - Show staged generation progress UI and draft preview.
 - Generate a deterministic draft plan preview from farm setup, selected crops, and per-crop goals.
 - Fill grid at 100% occupancy (no fallow cells) because empty lot is treated as lost profit.
-- Do not call the LLM here.
+- Generate a nursery schedule before transplant dates, using the seedling lead time from Setup Farm.
+- Flag nursery capacity risk if planned seedlings exceed available nursery capacity.
+- Do not show or run the Copilot here.
 
 ## Mock Rule/Layout Engine
 
@@ -306,6 +355,7 @@ Inputs:
 - Farm setup
 - Selected crops
 - Defined goal
+- Nursery capacity and seedling lead time
 - Optional structured constraints from re-plan
 
 Basic rules:
@@ -328,6 +378,14 @@ If the priority is maximize utilization:
 
 If the priority is minimize stockout risk:
   allocate more space to high-reserve / high-priority crops while still keeping 100% occupancy
+
+For each selected crop:
+  seedlingsPerWeek = ceil(targetKgPerWeek / yieldPerPlantKg)
+  seedlingsWithReserve = ceil(seedlingsPerWeek * (1 + reservePercent / 100))
+  seedingDate = transplantDate - seedlingDaysBeforeTransplant
+
+If seedlings currently in nursery exceed nursery capacity:
+  flag seedling capacity risk and suggest staggered seeding batches
 ```
 
 Example generated plan JSON:
@@ -339,7 +397,8 @@ Example generated plan JSON:
   "metrics": {
     "utilization": 100,
     "stockoutRisk": "low",
-    "expectedRevenue": 12400
+    "expectedRevenue": 12400,
+    "seedlingCapacityRisk": "medium"
   },
   "layout": [
     {
@@ -361,8 +420,35 @@ Example generated plan JSON:
       "reasonTags": ["spreading_growth", "edge_placement", "high_water"]
     }
   ],
+  "nurserySchedule": [
+    {
+      "crop": "lettuce",
+      "seedWeek": 1,
+      "transplantWeek": 3,
+      "seedlings": 1278,
+      "status": "stagger_required",
+      "reasonTags": ["target_crop", "reserve_15", "nursery_capacity_check"]
+    },
+    {
+      "crop": "basil",
+      "seedWeek": 1,
+      "transplantWeek": 3,
+      "seedlings": 1800,
+      "status": "stagger_required",
+      "reasonTags": ["reserve_20", "nursery_capacity_check"]
+    },
+    {
+      "crop": "mint",
+      "seedWeek": 1,
+      "transplantWeek": 3,
+      "seedlings": 2124,
+      "status": "stagger_required",
+      "reasonTags": ["reserve_18", "nursery_capacity_check"]
+    }
+  ],
   "warnings": [
-    "Mint is edge-placed because it can spread quickly."
+    "Mint is edge-placed because it can spread quickly.",
+    "Seedling demand exceeds nursery capacity, so batches should be staggered before transplant."
   ]
 }
 ```
@@ -383,29 +469,37 @@ Main UI:
   - Re-plan suggested status
 - Farm grid
 - 8-week plan timeline
-- AI Copilot preview card with template copy only
+- Seedling and transplant timeline
+- Nursery capacity warning, if any
+- Copilot preview card with template copy only
 - CTA: Confirm & Start
 
 Important:
 
-- Do not call the LLM on this page.
-- The AI Copilot card can show template text such as "This plan aligns crop needs with farm constraints."
-- The real interactive AI Copilot starts on Dashboard / Re-plan.
+- Do not run the interactive Copilot on this page.
+- The Copilot card can show template text such as "This plan aligns crop needs with farm constraints."
+- The interactive template Copilot starts on Dashboard / Re-plan.
 
 ## Page 7: Dashboard / Re-plan
 
 Purpose:
 
-Show the confirmed plan in an operating dashboard and let the user interact with the AI Copilot.
+Show the confirmed plan in an operating dashboard and let the user interact with the template Copilot.
 
 Main UI:
 
 - KPI cards
 - Farm grid
+- Crop mix summary
+- Live sensor snapshot
+- Nursery queue
+- Ready-to-transplant batch summary
+- Next seeding batch
+- Seedling capacity risk
 - 8-week plan
 - Sensor/status panel
 - Risk or incident panel
-- AI Copilot chat
+- Template Copilot chat
 - Re-plan buttons:
   - Explain risk
   - Show alternatives
@@ -420,36 +514,44 @@ Lettuce growth delayed by 5 days
 Dashboard behavior:
 
 1. Show the confirmed plan.
-2. User asks a why/re-plan question or clicks a scenario button.
-3. App sends farm setup, selected crops, goal, generated plan JSON, reason tags, and user question to the LLM.
+2. User clicks a pre-defined why/re-plan prompt or scenario button.
+3. App selects the matching template response using farm setup, selected crops, goal, generated plan JSON, nursery schedule, reason tags, and current incident state.
 4. If the question requires changed positions, convert the user request into structured constraints and re-run the rule/layout engine.
-5. LLM explains the existing or updated plan.
+5. Template Copilot explains the existing or updated plan.
 
-Recommended LLM model:
+Recommended demo Copilot implementation:
 
 ```text
-Gemini 2.5 Flash
+Pre-defined prompt chips + plan-aware template responses
 ```
 
-Prompt guardrails:
+Template response guardrails:
 
 ```text
-You are GrowPlan AI Copilot.
-Use only the provided farm setup, crop attributes, goal, generated plan, reason tags, and current incident.
+You are AgriMatrix Copilot.
+Use only the provided farm setup, crop attributes, goal, generated plan, nursery schedule, reason tags, and current incident.
 Do not invent plant facts.
 Do not change plant positions unless the app provides an updated plan.
 Explain briefly in friendly, operator-focused language.
 When asked to re-plan, describe the trade-off and refer to the updated layout returned by the rule engine.
 ```
 
-Example AI Copilot response:
+Optional production upgrade:
+
+```text
+After the demo, the same Copilot contract can be upgraded to a live LLM.
+The LLM should still receive only the structured plan context and should never become the source of truth for plant positions.
+```
+
+Example template Copilot response:
 
 ```text
 Lettuce is placed in A1-D5 because it is the target crop and needs the most consistent light and water zones.
 Basil is reserved separately to protect the 20% buffer, while Mint is kept near the edge because it spreads quickly.
+The seedling schedule starts two weeks before transplant so the nursery queue is ready before the grid changes.
 ```
 
-Example re-plan response:
+Example template re-plan response:
 
 ```text
 Because Lettuce is delayed by 5 days, the updated plan uses Basil reserve space more conservatively and keeps Mint isolated.
@@ -458,29 +560,30 @@ This reduces short-term stockout risk while keeping utilization above 90%.
 
 ## Demo Script
 
-1. Open GrowPlan AI.
+1. Open AgriMatrix.
 2. Show the Welcome page and click Start Demo.
-3. Confirm Setup Farm defaults: GreenRise Farm, 10 x 12 grid, 3 lighting zones, 2 irrigation zones.
+3. Confirm Setup Farm defaults: GreenRise Farm, 10 x 12 grid, 3 lighting zones, 2 irrigation zones, 240 seedling nursery capacity.
 4. Select Lettuce, Basil, and Mint.
-5. Define per-crop goals and reserve, then set 8-week horizon.
+5. Define per-crop goals and reserve, then show estimated seedlings per week.
 6. Generate Plan.
-7. Show draft grid allocation, timeline, utilization, and stockout risk.
+7. Show draft grid allocation, nursery schedule, timeline, utilization, and stockout risk.
 8. Confirm Plan.
 9. Land on Dashboard.
-10. Ask AI Copilot: Why is Mint placed at the edge?
-11. Simulate Lettuce delay +5 days.
-12. Show AI re-plan explanation and updated plan suggestion.
+10. Point out nursery queue, ready-to-transplant batch, and next seeding batch.
+11. Click Copilot prompt: Why is Mint placed at the edge?
+12. Simulate Lettuce delay +5 days.
+13. Show template re-plan explanation and updated plan suggestion.
 
 Opening line:
 
 ```text
-GrowPlan AI turns farm setup, crop choices, and production goals into a planting plan operators can actually use.
+AgriMatrix turns farm setup, nursery capacity, crop choices, and production goals into a planting plan operators can actually use.
 ```
 
 Closing line:
 
 ```text
-The wizard keeps planning stable, and the dashboard AI makes the confirmed plan explainable and adaptable.
+The wizard keeps planting and seedling schedules stable, and the dashboard Copilot makes the confirmed plan explainable and adaptable.
 ```
 
 ## Two-Day Build Plan
@@ -494,14 +597,15 @@ Day 1:
 - Create plant attribute JSON
 - Create deterministic rule/layout engine
 - Generate plan JSON and metrics
+- Add seedling estimate and nursery capacity logic
 
 Day 2:
 
 - Build Generate Plan UI
 - Build Confirm Plan UI
 - Build Dashboard / Re-plan UI
-- Add Gemini 2.5 Flash only in Dashboard AI Copilot
-- Add template fallback if LLM fails
+- Add pre-defined Copilot prompts and template responses in Dashboard
+- Keep optional LLM integration as a post-demo upgrade
 - Test all 15 non-empty crop combinations
 - Polish demo script and UI states
 
@@ -513,8 +617,16 @@ The demo should make these points obvious:
 - User can select any non-empty combination of 4 crops.
 - Every valid selection generates a deterministic plan.
 - The confirmed plan includes actual plant positions, metrics, and timeline.
-- The LLM appears in Dashboard / Re-plan only.
-- AI explanation stays consistent with the plan because the rule/layout engine remains the source of truth.
+- The confirmed plan includes nursery schedule, transplant timing, and seedling capacity risk.
+- The template Copilot appears in Dashboard / Re-plan only.
+- Copilot explanations stay consistent with the plan because the rule/layout engine remains the source of truth.
+
+## Deployment Note
+
+Current shared preview:
+
+- Vercel preview is available for team review
+- URL: `https://agrimatrix-demo.vercel.app`
 
 ## Nice-to-Have Features
 

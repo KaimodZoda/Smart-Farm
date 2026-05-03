@@ -14,28 +14,24 @@ import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
 import { StepActions } from '../components/StepActions'
 import { cropLibrary, type CropId } from '../constants/crops'
+import { generatePlanData } from '../lib/planGenerator'
 import { setupSteps } from '../constants/setupSteps'
-import type { GoalData, SetupFarmData } from '../types/planning'
+import type { GeneratedPlanData, GoalData, SetupFarmData } from '../types/planning'
 
 type ConfirmPlanPageProps = {
   farm: SetupFarmData
   selectedCropIds: CropId[]
   goalData: GoalData
+  generatedPlan: GeneratedPlanData | null
   onBackToGenerate: () => void
   onConfirm: () => void
-}
-
-const pricePerKgByCrop: Record<CropId, number> = {
-  lettuce: 2.2,
-  basil: 3.8,
-  kale: 2.7,
-  mint: 3.2,
 }
 
 export function ConfirmPlanPage({
   farm,
   selectedCropIds,
   goalData,
+  generatedPlan,
   onBackToGenerate,
   onConfirm,
 }: ConfirmPlanPageProps) {
@@ -44,37 +40,16 @@ export function ConfirmPlanPage({
     [selectedCropIds],
   )
 
-  const metrics = useMemo(() => {
-    const available = farm.rows * farm.columns
-    const required = selectedCrops.reduce((total, crop) => {
-      const target = goalData.cropGoals[crop.id]?.targetPerWeek ?? 0
-      const reserve = goalData.cropGoals[crop.id]?.reservePercent ?? 0
-      return total + (target * (1 + reserve / 100)) / crop.yieldPerGrid
-    }, 0)
-
-    const utilization = Math.max(30, Math.min(100, Math.round((required / available) * 100)))
-    const weeklyRevenue = selectedCrops.reduce((sum, crop) => {
-      const target = goalData.cropGoals[crop.id]?.targetPerWeek ?? 0
-      return sum + target * pricePerKgByCrop[crop.id]
-    }, 0)
-
-    const avgReserve =
-      selectedCrops.length === 0
-        ? 0
-        : Math.round(
-            selectedCrops.reduce(
-              (sum, crop) => sum + (goalData.cropGoals[crop.id]?.reservePercent ?? 0),
-              0,
-            ) / selectedCrops.length,
-          )
-
-    return {
-      utilization,
-      expectedRevenue: weeklyRevenue * 4,
-      stockoutRisk: avgReserve >= 18 ? 'Low' : avgReserve >= 12 ? 'Medium' : 'High',
-      replanSuggested: avgReserve < 15 || utilization >= 95,
-    }
-  }, [farm.columns, farm.rows, goalData.cropGoals, selectedCrops])
+  const resolvedPlan = useMemo(
+    () =>
+      generatedPlan ??
+      generatePlanData({
+        farm,
+        selectedCropIds,
+        goalData,
+      }),
+    [farm, generatedPlan, goalData, selectedCropIds],
+  )
 
   const timelineRows = useMemo(() => {
     return selectedCrops.map((crop, idx) => ({
@@ -116,28 +91,28 @@ export function ConfirmPlanPage({
                   <CircleCheckBig size={18} />
                 </span>
                 <p>Utilization</p>
-                <strong>{metrics.utilization}%</strong>
+                <strong>{resolvedPlan.utilizationPercent}%</strong>
               </article>
               <article>
                 <span className="kpi-icon good">
                   <Leaf size={18} />
                 </span>
                 <p>Expected revenue</p>
-                <strong>${(metrics.expectedRevenue / 1000).toFixed(1)}k</strong>
+                <strong>${(resolvedPlan.expectedRevenue / 1000).toFixed(1)}k</strong>
               </article>
               <article>
                 <span className="kpi-icon safe">
                   <ShieldCheck size={18} />
                 </span>
                 <p>Stockout risk</p>
-                <strong>{metrics.stockoutRisk}</strong>
+                <strong>{resolvedPlan.stockoutRisk}</strong>
               </article>
               <article>
                 <span className="kpi-icon warn">
                   <RefreshCcw size={18} />
                 </span>
                 <p>Re-plan suggested</p>
-                <strong>{metrics.replanSuggested ? 'Yes' : 'No'}</strong>
+                <strong>{resolvedPlan.utilizationPercent >= 95 ? 'Yes' : 'No'}</strong>
               </article>
             </div>
 
@@ -145,21 +120,17 @@ export function ConfirmPlanPage({
               <section className="confirm-grid-card">
                 <header>
                   <h2>Farm Grid</h2>
-                  <span>{farm.rows} x {farm.columns}</span>
+                  <span>{resolvedPlan.rows} x {resolvedPlan.columns}</span>
                 </header>
-                <div className="confirm-grid">
-                  {Array.from({ length: 48 }, (_, index) => {
-                    const crop = selectedCrops[index % Math.max(selectedCrops.length, 1)]
-                    return (
-                      <span
-                        key={index}
-                        style={{ backgroundColor: crop?.accent ?? '#dfe5e2' }}
-                        title={crop?.name ?? 'Crop'}
-                      >
-                        {index + 1}
-                      </span>
-                    )
-                  })}
+                <div
+                  className="confirm-grid"
+                  style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, minmax(0, 1fr))` }}
+                >
+                  {resolvedPlan.cells.map((cell, index) => (
+                    <span key={index} style={{ backgroundColor: cell.color }} title={cell.label}>
+                      {index + 1}
+                    </span>
+                  ))}
                 </div>
               </section>
 
