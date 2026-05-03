@@ -66,6 +66,7 @@ function App() {
   )
   const [goalData, setGoalData] = useState<GoalData>(createInitialGoalData)
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlanData | null>(null)
+  const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([])
 
   if (page === 'dashboard') {
     return (
@@ -89,6 +90,12 @@ function App() {
         goalData={goalData}
         generatedPlan={generatedPlan}
         mode="employer"
+        completedTaskIds={completedTaskIds}
+        onToggleTask={(taskId) => {
+          setCompletedTaskIds((prev) =>
+            prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
+          )
+        }}
         onBack={() => setPage('dashboard')}
       />
     )
@@ -102,6 +109,12 @@ function App() {
         goalData={goalData}
         generatedPlan={generatedPlan}
         mode="employee"
+        completedTaskIds={completedTaskIds}
+        onToggleTask={(taskId) => {
+          setCompletedTaskIds((prev) =>
+            prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
+          )
+        }}
         onBack={() => setPage('welcome')}
       />
     )

@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   ArrowLeft,
+  Bell,
   Bot,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Grid3X3,
   Leaf,
   ShieldCheck,
   Sparkles,
+  Sprout,
   UserRound,
   Users,
   Waves,
@@ -28,6 +31,8 @@ type WorkScheduleTask = {
   assignee: string
   zone: string
   reason: string
+  instruction: string
+  doneWhen: string
 }
 
 type WorkSchedulePageProps = {
@@ -36,6 +41,8 @@ type WorkSchedulePageProps = {
   goalData: GoalData
   generatedPlan: GeneratedPlanData | null
   mode: WorkScheduleMode
+  completedTaskIds: string[]
+  onToggleTask: (taskId: string) => void
   onBack: () => void
 }
 
@@ -53,6 +60,8 @@ export function WorkSchedulePage({
   goalData,
   generatedPlan,
   mode,
+  completedTaskIds,
+  onToggleTask,
   onBack,
 }: WorkSchedulePageProps) {
   const selectedCrops = useMemo(
@@ -85,6 +94,8 @@ export function WorkSchedulePage({
         assignee: assignees[index % assignees.length],
         zone: `Nursery Rack ${String.fromCharCode(65 + index)}`,
         reason: `Ready for transplant by Week ${batch.transplantWeek} using ${farm.seedlingLeadDays}-day lead time.`,
+        instruction: `Prepare ${batch.seedlings} cells, place 1 seed per cell, and mist evenly after seeding.`,
+        doneWhen: `${batch.seedlings} cells are seeded, labeled, and moved to Nursery Rack ${String.fromCharCode(65 + index)}.`,
       })
     })
 
@@ -98,6 +109,8 @@ export function WorkSchedulePage({
         assignee: assignees[(index + 2) % assignees.length],
         zone: `Grid ${String.fromCharCode(65 + index)}${index + 2}-${String.fromCharCode(65 + index)}${index + 5}`,
         reason: `Aligns growth window to harvest in Week ${row.harvestWeek}.`,
+        instruction: `Transplant the scheduled tray batch, keep spacing consistent, and verify drip flow for each row.`,
+        doneWhen: `${row.label} trays are transplanted and irrigation check is complete for ${String.fromCharCode(65 + index)} rows.`,
       })
     })
 
@@ -114,6 +127,8 @@ export function WorkSchedulePage({
       assignee: assignees[1],
       zone: 'Zone 2',
       reason: 'Prevents stockout before next cycle handoff.',
+      instruction: `Harvest mature heads only. Keep damaged plants separate and record total harvested count.`,
+      doneWhen: 'Target harvest count is packed and recorded in the shift log.',
     })
 
     generated.push({
@@ -127,6 +142,10 @@ export function WorkSchedulePage({
       reason: highRisk
         ? 'Nursery load is tight; nutrient stability reduces transplant stress.'
         : 'Keep nutrient profile stable across active rows.',
+      instruction: highRisk
+        ? 'Measure EC, then adjust nutrient mix in small steps to reach 1.8-1.9 mS/cm.'
+        : 'Measure EC and correct to 1.8 mS/cm standard setting for Zone A.',
+      doneWhen: 'EC is stable in range and re-check after 15 minutes confirms no drift.',
     })
 
     if (mintCrop) {
@@ -139,6 +158,8 @@ export function WorkSchedulePage({
         assignee: assignees[0],
         zone: 'Edge Row E',
         reason: 'Mint spreads quickly. Early check avoids crowding nearby crops.',
+        instruction: 'Inspect edge row for spread into adjacent cells and trim overgrowth if needed.',
+        doneWhen: 'Edge row is clear, trimmed, and no mint overlap into neighboring crop cells.',
       })
     }
 
@@ -156,29 +177,37 @@ export function WorkSchedulePage({
     tasks.forEach((task) => groups[task.timeWindow].push(task))
     return groups
   }, [tasks])
-  const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set())
-
   const toggleTaskDone = (taskId: string) => {
     if (mode !== 'employee') return
-    setCompletedTaskIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(taskId)) {
-        next.delete(taskId)
-      } else {
-        next.add(taskId)
-      }
-      return next
-    })
+    onToggleTask(taskId)
   }
 
   const totalMinutes = tasks.reduce((sum, task) => sum + task.minutes, 0)
   const laborHours = (totalMinutes / 60).toFixed(1)
-  const completedCount = completedTaskIds.size
+  const completedSet = useMemo(() => {
+    const userSet = new Set(completedTaskIds)
+    if (mode === 'employer' && userSet.size === 0) {
+      tasks
+        .filter((task) => task.timeWindow === 'Morning')
+        .forEach((task) => userSet.add(task.id))
+    }
+    return userSet
+  }, [completedTaskIds, mode, tasks])
+  const completedCount = tasks.filter((task) => completedSet.has(task.id)).length
+  const completedPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
   const readyHarvest = resolvedPlan.timelineRows.filter((row) => row.harvestWeek <= 3).length
   const peakNursery = Math.max(...resolvedPlan.nurseryLoad.map((item) => item.activeSeedlings), 0)
   const staffLoadPercent = Math.min(100, Math.round((totalMinutes / (assignees.length * 120)) * 100))
   const nurseryLoadPercent =
     farm.nurseryCapacity > 0 ? Math.min(100, Math.round((peakNursery / farm.nurseryCapacity) * 100)) : 0
+  const pendingByAssignee = useMemo(() => {
+    const counts = new Map<string, number>()
+    tasks.forEach((task) => {
+      if (completedSet.has(task.id)) return
+      counts.set(task.assignee, (counts.get(task.assignee) ?? 0) + 1)
+    })
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])
+  }, [completedSet, tasks])
 
   const accountInitials =
     farm.farmName
@@ -197,14 +226,45 @@ export function WorkSchedulePage({
           <Leaf size={20} />
         </div>
         <nav className="dashboard-nav">
-          <button type="button">
-            <CalendarDays size={18} />
-            <span>Overview</span>
-          </button>
-          <button type="button" className="active">
-            <Sparkles size={18} />
-            <span>Work Schedule</span>
-          </button>
+          {mode === 'employer' ? (
+            <>
+              <button type="button" className="tab-key-overview" onClick={onBack}>
+                <Grid3X3 size={18} />
+                <span>Overview</span>
+              </button>
+              <button type="button">
+                <Sprout size={18} />
+                <span>Farm Grid</span>
+              </button>
+              <button type="button">
+                <CalendarDays size={18} />
+                <span>Plan</span>
+              </button>
+              <button type="button" className="active tab-key-work-schedule">
+                <Sparkles size={18} />
+                <span>Work Schedule</span>
+              </button>
+              <button type="button">
+                <Leaf size={18} />
+                <span>Crops</span>
+              </button>
+              <button type="button">
+                <Waves size={18} />
+                <span>Sensors</span>
+              </button>
+              <button type="button">
+                <Bell size={18} />
+                <span>Alerts</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="active tab-key-work-schedule">
+                <Sparkles size={18} />
+                <span>Work Schedule</span>
+              </button>
+            </>
+          )}
         </nav>
       </aside>
 
@@ -245,8 +305,19 @@ export function WorkSchedulePage({
           </article>
           {mode === 'employer' ? (
             <button type="button" className="risk-kpi assign-kpi">
-              <p>Ready for staff handoff</p>
-              <strong>Assign Tasks</strong>
+              <p>Team Progress</p>
+              <strong>
+                {completedCount}/{tasks.length} done
+              </strong>
+              <span>{completedPercent}% completed</span>
+              <span className="kpi-progress-track">
+                <b style={{ width: `${completedPercent}%` }}></b>
+              </span>
+              <span className="team-progress-pending">
+                {pendingByAssignee.length > 0
+                  ? `Pending: ${pendingByAssignee.map(([assignee, count]) => `${assignee} ${count}`).join(' | ')}`
+                  : 'All assigned tasks are completed'}
+              </span>
             </button>
           ) : (
             <article className="goal-kpi">
@@ -254,7 +325,10 @@ export function WorkSchedulePage({
               <strong>
                 {completedCount}/{tasks.length}
               </strong>
-              <span>Keep task order by priority</span>
+              <span>{completedPercent}% completed</span>
+              <span className="completed-progress-track">
+                <b style={{ width: `${completedPercent}%` }}></b>
+              </span>
             </article>
           )}
         </section>
@@ -296,13 +370,13 @@ export function WorkSchedulePage({
                   {groupedTasks[window].map((task) => (
                     <div
                       key={task.id}
-                      className={`schedule-task priority-${task.priority.toLowerCase()} ${completedTaskIds.has(task.id) ? 'done' : ''}`}
+                      className={`schedule-task priority-${task.priority.toLowerCase()} ${completedSet.has(task.id) ? 'done' : ''}`}
                     >
                       <div className="task-main">
                         {mode === 'employee' ? (
                           <button
                             type="button"
-                            className={`task-check-btn ${completedTaskIds.has(task.id) ? 'done' : ''}`}
+                            className={`task-check-btn ${completedSet.has(task.id) ? 'done' : ''}`}
                             aria-label={`Toggle ${task.title}`}
                             onClick={() => toggleTaskDone(task.id)}
                           >
@@ -320,6 +394,9 @@ export function WorkSchedulePage({
                         </div>
                       </div>
                       <div className="task-meta">
+                        {task.priority === 'High' ? (
+                          <span className="task-priority-label">! High priority</span>
+                        ) : null}
                         <small>{task.zone}</small>
                         {mode === 'employer' ? (
                           <b>
@@ -328,6 +405,14 @@ export function WorkSchedulePage({
                           </b>
                         ) : null}
                       </div>
+                      {mode === 'employee' ? (
+                        <div className="task-detail">
+                          <p>{task.instruction}</p>
+                          <span>
+                            <strong>Done when:</strong> {task.doneWhen}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </article>

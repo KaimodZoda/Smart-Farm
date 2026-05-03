@@ -2279,6 +2279,20 @@
   color: #146f42;
 }
 
+.dashboard-nav button.tab-key-overview svg {
+  color: #2d7ab4;
+}
+
+.dashboard-nav button.tab-key-work-schedule svg {
+  color: #179452;
+}
+
+.dashboard-nav button.active.tab-key-overview {
+  background: #eef5fc;
+  border-color: #ccdeee;
+  color: #216ea6;
+}
+
 .dashboard-main {
   padding: 0 14px 14px;
   display: grid;
@@ -2884,6 +2898,37 @@
   cursor: pointer;
 }
 
+.schedule-kpis .assign-kpi span {
+  display: block;
+  margin-top: 4px;
+  color: #4f6475;
+  font-size: 0.82rem;
+}
+
+.kpi-progress-track {
+  margin-top: 8px;
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: #dce9e1;
+  overflow: hidden;
+}
+
+.kpi-progress-track b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3dbd73, #1b9653);
+  transition: width 180ms ease;
+}
+
+.team-progress-pending {
+  margin-top: 7px;
+  font-size: 0.76rem;
+  color: #3f5b6d;
+  line-height: 1.35;
+}
+
 .schedule-layout {
   padding: 0 14px 14px;
   display: grid;
@@ -2955,6 +3000,23 @@
   background: linear-gradient(90deg, #2eb567, #1d9a55);
 }
 
+.completed-progress-track {
+  margin-top: 8px;
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: #dce9e1;
+  overflow: hidden;
+}
+
+.completed-progress-track b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3dbd73, #1b9653);
+  transition: width 180ms ease;
+}
+
 .schedule-groups {
   margin-top: 12px;
   display: grid;
@@ -2989,8 +3051,15 @@
 }
 
 .schedule-task.priority-high {
-  border-color: #eccba3;
-  background: #fff9f2;
+  border-color: #d5e1d9;
+  background: #ffffff;
+}
+
+.schedule-task.done.priority-high,
+.schedule-task.done.priority-medium,
+.schedule-task.done.priority-low {
+  border-color: #b6dcc4;
+  background: #eef9f2;
 }
 
 .schedule-task.priority-medium {
@@ -3048,9 +3117,17 @@
 .task-meta {
   margin-top: 8px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.task-priority-label {
+  margin-right: auto;
+  color: #b15d0f;
+  font-size: 0.74rem;
+  font-weight: 800;
 }
 
 .task-meta small {
@@ -3067,6 +3144,31 @@
   gap: 4px;
   color: #1f3b50;
   font-size: 0.72rem;
+}
+
+.task-detail {
+  margin-top: 8px;
+  border-top: 1px dashed #d7e3db;
+  padding-top: 7px;
+}
+
+.task-detail p {
+  margin: 0;
+  color: #2f4b5e;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.task-detail span {
+  margin-top: 5px;
+  display: block;
+  color: #4d6678;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.task-detail strong {
+  color: #204156;
 }
 
 .insight-list {

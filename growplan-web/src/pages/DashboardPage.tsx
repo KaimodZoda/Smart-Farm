@@ -57,10 +57,10 @@ export function DashboardPage({
   onOpenWorkSchedule,
 }: DashboardPageProps) {
   const sideItems = [
-    { label: 'Overview', icon: Grid3X3, active: true },
+    { label: 'Overview', icon: Grid3X3, active: true, tabClass: 'tab-key-overview' },
     { label: 'Farm Grid', icon: Sprout },
     { label: 'Plan', icon: CalendarDays },
-    { label: 'Work Schedule', icon: Sparkles, onClick: onOpenWorkSchedule },
+    { label: 'Work Schedule', icon: Sparkles, onClick: onOpenWorkSchedule, tabClass: 'tab-key-work-schedule' },
     { label: 'Crops', icon: Leaf },
     { label: 'Sensors', icon: Waves },
     { label: 'Alerts', icon: Bell },
@@ -220,7 +220,7 @@ export function DashboardPage({
               <button
                 key={item.label}
                 type="button"
-                className={item.active ? 'active' : ''}
+                className={`${item.active ? 'active' : ''} ${item.tabClass ?? ''}`.trim()}
                 onClick={item.onClick}
               >
                 <Icon size={18} />
