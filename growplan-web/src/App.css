@@ -2388,14 +2388,26 @@
 }
 
 .dashboard-grid-card header span {
-  font-size: 0.83rem;
+  display: none;
+}
+
+.dashboard-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-grid-size {
+  font-size: 0.82rem;
   color: #617687;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .dashboard-grid {
-  margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(10, 34px);
   gap: 4px;
   justify-content: start;
 }

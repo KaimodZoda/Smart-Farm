@@ -248,20 +248,24 @@ export function DashboardPage({
             <section className="dashboard-grid-card">
               <header>
                 <h2>Farm Grid</h2>
-                <span>{resolvedPlan.rows}x{resolvedPlan.columns}</span>
               </header>
               <div className="dashboard-grid-layout">
-                <div
-                  className="dashboard-grid"
-                  style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, 30px)` }}
-                >
-                  {gridCells.map((cell, idx) => (
-                    <span
-                      key={idx}
-                      style={{ backgroundColor: cell.color }}
-                      title={cell.name}
-                    ></span>
-                  ))}
+                <div className="dashboard-grid-wrapper">
+                  <div className="dashboard-grid-size">
+                    Layout: {resolvedPlan.rows}x{resolvedPlan.columns}
+                  </div>
+                  <div
+                    className="dashboard-grid"
+                    style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, 30px)` }}
+                  >
+                    {gridCells.map((cell, idx) => (
+                      <span
+                        key={idx}
+                        style={{ backgroundColor: cell.color }}
+                        title={cell.name}
+                      ></span>
+                    ))}
+                  </div>
                 </div>
 
                 <aside className="dashboard-grid-insights">
