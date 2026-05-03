@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CalendarDays,
   CheckCircle2,
@@ -37,6 +37,47 @@ export function GeneratePlanPage({
   onBackToDefineGoal,
   onContinue,
 }: GeneratePlanPageProps) {
+  const analysisBlueprint = useMemo(
+    () => [
+      { label: 'Analyzing farm layout', icon: LayoutGrid },
+      { label: 'Balancing crop cycles', icon: Sprout },
+      { label: 'Optimizing grid allocation', icon: Sparkles },
+      { label: 'Scheduling seedling batches', icon: Waves },
+      { label: 'Forecasting harvest schedule', icon: CalendarDays },
+    ],
+    [],
+  )
+  const [analysisProgress, setAnalysisProgress] = useState<number[]>(
+    Array.from({ length: analysisBlueprint.length }, () => 0),
+  )
+  const [activeStepIndex, setActiveStepIndex] = useState(0)
+
+  useEffect(() => {
+    setAnalysisProgress(Array.from({ length: analysisBlueprint.length }, () => 0))
+    setActiveStepIndex(0)
+  }, [analysisBlueprint.length, farm, goalData, selectedCropIds])
+
+  useEffect(() => {
+    if (activeStepIndex >= analysisBlueprint.length) return
+
+    const timer = window.setInterval(() => {
+      setAnalysisProgress((prev) => {
+        const next = [...prev]
+        const current = next[activeStepIndex] ?? 0
+        const updated = Math.min(100, current + 8)
+        next[activeStepIndex] = updated
+        if (updated === 100) {
+          window.setTimeout(() => {
+            setActiveStepIndex((index) => Math.max(index, activeStepIndex + 1))
+          }, 180)
+        }
+        return next
+      })
+    }, 95)
+
+    return () => window.clearInterval(timer)
+  }, [activeStepIndex, analysisBlueprint.length])
+
   const selectedCrops = useMemo(
     () => cropLibrary.filter((crop) => selectedCropIds.includes(crop.id)),
     [selectedCropIds],
@@ -53,13 +94,17 @@ export function GeneratePlanPage({
     [farm, generatedPlan, goalData, selectedCropIds],
   )
 
-  const analysisSteps = [
-    { label: 'Analyzing farm layout', progress: 100, status: 'done' as const, icon: LayoutGrid },
-    { label: 'Balancing crop cycles', progress: 100, status: 'done' as const, icon: Sprout },
-    { label: 'Optimizing grid allocation', progress: 100, status: 'done' as const, icon: Sparkles },
-    { label: 'Scheduling seedling batches', progress: 82, status: 'running' as const, icon: Waves },
-    { label: 'Forecasting harvest schedule', progress: 52, status: 'pending' as const, icon: CalendarDays },
-  ]
+  const allAnalysisDone = activeStepIndex >= analysisBlueprint.length
+  const analysisSteps = analysisBlueprint.map((step, index) => {
+    const progress = analysisProgress[index] ?? 0
+    const status =
+      index < activeStepIndex ? ('done' as const) : index === activeStepIndex ? ('running' as const) : ('pending' as const)
+    return {
+      ...step,
+      progress,
+      status: allAnalysisDone ? ('done' as const) : status,
+    }
+  })
 
   const accountInitials =
     farm.farmName
@@ -71,6 +116,7 @@ export function GeneratePlanPage({
       .slice(0, 2) || 'GF'
 
   const handleContinue = () => {
+    if (!allAnalysisDone) return
     onGeneratePlan(resolvedPlan)
     onContinue()
   }
@@ -127,13 +173,15 @@ export function GeneratePlanPage({
               onNext={handleContinue}
               backLabel="Back"
               nextLabel="View Draft Plan"
+              nextDisabled={!allAnalysisDone}
+              nextLoading={!allAnalysisDone}
             />
           </section>
 
-          <aside className="generate-preview-card">
+          <aside className={`generate-preview-card ${allAnalysisDone ? '' : 'processing'}`}>
             <header>
               <h2>Draft Plan Preview</h2>
-              <p>Grid allocation preview</p>
+              <p>{allAnalysisDone ? 'Grid allocation preview' : 'Processing...'}</p>
             </header>
 
             <div className="generate-legend">
@@ -250,6 +298,12 @@ export function GeneratePlanPage({
               Peak nursery load {Math.max(...resolvedPlan.nurseryLoad.map((item) => item.activeSeedlings), 0)} seedlings vs capacity{' '}
               {farm.nurseryCapacity}.
             </div>
+            {!allAnalysisDone ? (
+              <div className="generate-preview-overlay" aria-live="polite">
+                <LoaderCircle size={18} className="spin" />
+                Draft plan is processing...
+              </div>
+            ) : null}
           </aside>
         </section>
       </section>

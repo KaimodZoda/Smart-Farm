@@ -1529,6 +1529,32 @@
 
 .generate-engine-card,
 .generate-preview-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.generate-preview-card.processing > *:not(.generate-preview-overlay) {
+  opacity: 0.45;
+}
+
+.generate-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(247, 250, 248, 0.82);
+  color: #1a3650;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.generate-preview-card header p {
+  min-height: 1.2rem;
+}
+
+.generate-preview-card {
   background: #ffffff;
   border: 1px solid #d8e4dc;
   border-radius: 8px;
