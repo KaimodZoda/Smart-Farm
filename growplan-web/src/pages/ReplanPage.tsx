@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   CalendarDays,
@@ -150,6 +150,47 @@ export function ReplanPage({
   const secondaryCrop = selectedCrops[1] || selectedCrops[0] || cropLibrary[0]
   const secondaryCropName = secondaryCrop.name
 
+  const analysisBlueprint = useMemo(
+    () => [
+      { label: 'Locking confirmed farm grid', icon: LayoutGrid },
+      { label: `Reading incident: ${primaryCropName} delay +5 days`, icon: AlertTriangle },
+      { label: `Shifting ${primaryCropName} grow and harvest window`, icon: Sprout },
+      { label: 'Rebalancing nursery queue', icon: Waves },
+      { label: 'Preparing operator-facing explanation', icon: CalendarDays },
+    ],
+    [primaryCropName],
+  )
+  const [analysisProgress, setAnalysisProgress] = useState<number[]>(
+    Array.from({ length: analysisBlueprint.length }, () => 0),
+  )
+  const [activeStepIndex, setActiveStepIndex] = useState(0)
+
+  useEffect(() => {
+    setAnalysisProgress(Array.from({ length: analysisBlueprint.length }, () => 0))
+    setActiveStepIndex(0)
+  }, [analysisBlueprint.length, farm, goalData, selectedCropIds, primaryCropName])
+
+  useEffect(() => {
+    if (activeStepIndex >= analysisBlueprint.length) return
+
+    const timer = window.setInterval(() => {
+      setAnalysisProgress((prev) => {
+        const next = [...prev]
+        const current = next[activeStepIndex] ?? 0
+        const updated = Math.min(100, current + 9)
+        next[activeStepIndex] = updated
+        if (updated === 100) {
+          window.setTimeout(() => {
+            setActiveStepIndex((index) => Math.max(index, activeStepIndex + 1))
+          }, 180)
+        }
+        return next
+      })
+    }, 95)
+
+    return () => window.clearInterval(timer)
+  }, [activeStepIndex, analysisBlueprint.length])
+
   const replanSteps = useMemo(() => [
     { id: 1, title: 'Confirmed Plan', subtitle: 'Use the locked dashboard plan' },
     { id: 2, title: 'Incident', subtitle: `${primaryCropName} delay detected` },
@@ -186,13 +227,17 @@ export function ReplanPage({
     )
   }, [farm.nurseryCapacity, replannedPlan.nurseryLoad])
 
-  const analysisSteps = [
-    { label: 'Locking confirmed farm grid', progress: 100, status: 'done' as const, icon: LayoutGrid },
-    { label: `Reading incident: ${primaryCropName} delay +5 days`, progress: 100, status: 'done' as const, icon: AlertTriangle },
-    { label: `Shifting ${primaryCropName} grow and harvest window`, progress: 100, status: 'done' as const, icon: Sprout },
-    { label: 'Rebalancing nursery queue', progress: 88, status: 'running' as const, icon: Waves },
-    { label: 'Preparing operator-facing explanation', progress: 62, status: 'pending' as const, icon: CalendarDays },
-  ]
+  const allAnalysisDone = activeStepIndex >= analysisBlueprint.length
+  const analysisSteps = analysisBlueprint.map((step, index) => {
+    const progress = analysisProgress[index] ?? 0
+    const status =
+      index < activeStepIndex ? ('done' as const) : index === activeStepIndex ? ('running' as const) : ('pending' as const)
+    return {
+      ...step,
+      progress,
+      status: allAnalysisDone ? ('done' as const) : status,
+    }
+  })
 
   const accountInitials =
     farm.farmName
@@ -273,16 +318,21 @@ export function ReplanPage({
 
             <StepActions
               onBack={onBackToDashboard}
-              onNext={() => onApplyPlan(replannedPlan)}
+              onNext={() => {
+                if (!allAnalysisDone) return
+                onApplyPlan(replannedPlan)
+              }}
               backLabel="Back to Dashboard"
               nextLabel="Apply Re-plan"
+              nextDisabled={!allAnalysisDone}
+              nextLoading={!allAnalysisDone}
             />
           </section>
 
-          <aside className="generate-preview-card">
+          <aside className={`generate-preview-card ${allAnalysisDone ? '' : 'processing'}`}>
             <header>
               <h2>Updated Plan Preview</h2>
-              <p>{primaryCropName} delay scenario applied</p>
+              <p>{allAnalysisDone ? `${primaryCropName} delay scenario applied` : 'Processing...'}</p>
             </header>
 
             <div className="generate-legend">
@@ -402,6 +452,12 @@ export function ReplanPage({
               <ShieldCheck size={16} />
               Original grid allocation stays locked for all crops.
             </div>
+            {!allAnalysisDone ? (
+              <div className="generate-preview-overlay" aria-live="polite">
+                <LoaderCircle size={18} className="spin" />
+                Re-plan is processing...
+              </div>
+            ) : null}
           </aside>
         </section>
       </section>
