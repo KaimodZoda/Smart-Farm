@@ -253,7 +253,7 @@ export function DashboardPage({
               <div className="dashboard-grid-layout">
                 <div
                   className="dashboard-grid"
-                  style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, 34px)` }}
+                  style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, 30px)` }}
                 >
                   {gridCells.map((cell, idx) => (
                     <span

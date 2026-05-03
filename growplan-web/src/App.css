@@ -2348,12 +2348,20 @@
   gap: 8px;
 }
 
-.dashboard-grid-card,
+.dashboard-grid-card {
+  border: 1px solid #d5e1d9;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px 14px;
+}
+
 .dashboard-plan-card {
   border: 1px solid #d5e1d9;
   border-radius: 8px;
   background: #ffffff;
   padding: 12px 14px;
+  height: 260px;
+  overflow-y: auto;
 }
 
 .dashboard-copilot {
@@ -2363,7 +2371,7 @@
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  height: 840px;
+  height: 680px;
 }
 
 .dashboard-grid-card header {
@@ -2403,13 +2411,13 @@
   display: flex;
   justify-content: space-evenly;
   align-items: start;
-  gap: 0;
+  gap: 12px;
 }
 
 .dashboard-grid-insights {
-  width: 230px;
+  width: 220px;
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 
 .crop-mix-card,
@@ -2417,7 +2425,7 @@
   border: 1px solid #d8e3dc;
   border-radius: 8px;
   background: #fbfefc;
-  padding: 9px;
+  padding: 6px 8px;
 }
 
 .nursery-insight-card article small {
@@ -2428,12 +2436,12 @@
 .crop-mix-card h3,
 .sensor-mini-card h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #253e50;
 }
 
 .crop-mix-card article {
-  margin-top: 8px;
+  margin-top: 4px;
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
