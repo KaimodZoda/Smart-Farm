@@ -49,6 +49,8 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
   const [columns, setColumns] = useState(initialData.columns)
   const [lightingZones, setLightingZones] = useState(initialData.lightingZones)
   const [irrigationZones, setIrrigationZones] = useState(initialData.irrigationZones)
+  const [nurseryCapacity, setNurseryCapacity] = useState(initialData.nurseryCapacity)
+  const [seedlingLeadDays, setSeedlingLeadDays] = useState(initialData.seedlingLeadDays)
   const [growingSystem, setGrowingSystem] = useState(initialData.growingSystem)
   const [activeTool, setActiveTool] = useState<ZoneTool>('lighting')
   const [activeLightingZone, setActiveLightingZone] = useState(1)
@@ -201,6 +203,8 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
       columns,
       lightingZones,
       irrigationZones,
+      nurseryCapacity,
+      seedlingLeadDays,
       growingSystem,
       lightingAssignments,
       irrigationAssignments,
@@ -320,6 +324,26 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
                   <option>Aeroponic</option>
                   <option>Container garden</option>
                 </select>
+              </label>
+              <label>
+                Nursery capacity (seedlings)
+                <input
+                  type="number"
+                  min={20}
+                  max={2000}
+                  value={nurseryCapacity}
+                  onChange={(e) => setNurseryCapacity(Math.max(20, Number(e.target.value) || 20))}
+                />
+              </label>
+              <label>
+                Seedling lead time (days)
+                <input
+                  type="number"
+                  min={7}
+                  max={35}
+                  value={seedlingLeadDays}
+                  onChange={(e) => setSeedlingLeadDays(Math.max(7, Number(e.target.value) || 7))}
+                />
               </label>
             </div>
           </section>
@@ -443,6 +467,16 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
                   {irrigationZones} irrigation zones
                 </span>
               </div>
+
+              <div className="nursery-summary-bar">
+                <span>
+                  Nursery capacity <strong>{nurseryCapacity}</strong> seedlings
+                </span>
+                <span>
+                  Lead time <strong>{seedlingLeadDays}</strong> days before transplant
+                </span>
+              </div>
+
               <StepActions
                 onBack={onBackToWelcome}
                 onNext={handleContinue}

@@ -1,9 +1,13 @@
 import { cropLibrary, type CropId } from '../constants/crops'
 import type {
+  CropPlanSummary,
   GeneratedPlanCell,
   GeneratedPlanData,
   GoalData,
   GoalPriority,
+  NurseryBatch,
+  NurseryLoadWeek,
+  PlanTimelineRow,
   SetupFarmData,
 } from '../types/planning'
 
@@ -52,6 +56,24 @@ const getNeighborIndexes = (index: number, rows: number, cols: number) => {
   })
 
   return neighbors
+}
+
+const parsePlanningHorizonWeeks = (planningHorizon: string) => {
+  const parsed = Number.parseInt(planningHorizon, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8
+}
+
+const parseGrowthWeeks = (growthDays: string) => {
+  const dayValues = growthDays.match(/\d+/g)?.map((value) => Number.parseInt(value, 10)) ?? []
+  if (dayValues.length === 0) return 4
+  const averageDays = dayValues.reduce((sum, value) => sum + value, 0) / dayValues.length
+  return Math.max(3, Math.ceil(averageDays / 7))
+}
+
+const getRiskFromUtilization = (utilizationPercent: number): 'Low' | 'Medium' | 'High' => {
+  if (utilizationPercent >= 100) return 'High'
+  if (utilizationPercent >= 80) return 'Medium'
+  return 'Low'
 }
 
 const allocateCounts = ({
@@ -119,6 +141,8 @@ export function generatePlanData({
 }): GeneratedPlanData {
   const selectedCrops = cropLibrary.filter((crop) => selectedCropIds.includes(crop.id))
   const selectedCropsById = new Map(selectedCrops.map((crop) => [crop.id, crop]))
+  const horizonWeeks = parsePlanningHorizonWeeks(goalData.planningHorizon)
+  const seedlingLeadWeeks = Math.max(1, Math.ceil(farm.seedlingLeadDays / 7))
 
   const availableCapacity = farm.rows * farm.columns
   const requiredCapacity = selectedCrops.reduce((total, crop) => {
@@ -149,6 +173,104 @@ export function generatePlanData({
     usedCells: availableCapacity,
     priority: goalData.priority,
   })
+
+  const allocationMap = new Map(allocations.map((allocation) => [allocation.cropId, allocation.count]))
+  const cropSummaries: CropPlanSummary[] = selectedCrops.map((crop) => {
+    const allocatedCells = allocationMap.get(crop.id) ?? 0
+    const reservePercent = goalData.cropGoals[crop.id]?.reservePercent ?? 0
+    const growthWeeks = parseGrowthWeeks(crop.growthDays)
+    const seedlingsPerWeek = Math.max(
+      1,
+      Math.ceil((allocatedCells * (1 + reservePercent / 100)) / growthWeeks),
+    )
+
+    return {
+      cropId: crop.id,
+      label: crop.name,
+      color: crop.accent,
+      allocatedCells,
+      targetPerWeek: goalData.cropGoals[crop.id]?.targetPerWeek ?? 0,
+      reservePercent,
+      seedlingsPerWeek,
+    }
+  })
+
+  const timelineRows: PlanTimelineRow[] = cropSummaries.map((summary, idx) => {
+    const crop = selectedCropsById.get(summary.cropId) ?? cropLibrary[0]
+    const growthWeeks = parseGrowthWeeks(crop.growthDays)
+    const seedWeek = 1 + (idx % Math.max(1, Math.min(2, seedlingLeadWeeks)))
+    const transplantWeek = Math.min(horizonWeeks, seedWeek + seedlingLeadWeeks)
+    const growWeeks = Math.max(2, growthWeeks - seedlingLeadWeeks)
+    const harvestWeek = Math.min(horizonWeeks, transplantWeek + growWeeks)
+
+    return {
+      cropId: summary.cropId,
+      label: summary.label,
+      color: summary.color,
+      seedWeek,
+      transplantWeek,
+      growWeeks,
+      harvestWeek,
+    }
+  })
+
+  const nurserySchedule: NurseryBatch[] = cropSummaries.flatMap((summary) => {
+    return Array.from({ length: horizonWeeks }, (_, weekIndex) => {
+      const transplantWeek = weekIndex + 1
+      const seedWeek = Math.max(1, transplantWeek - seedlingLeadWeeks)
+      return {
+        cropId: summary.cropId,
+        label: summary.label,
+        color: summary.color,
+        seedWeek,
+        transplantWeek,
+        seedlings: summary.seedlingsPerWeek,
+        status: 'Scheduled' as const,
+      }
+    })
+  })
+
+  const nurseryLoad: NurseryLoadWeek[] = Array.from({ length: horizonWeeks }, (_, weekIndex) => {
+    const week = weekIndex + 1
+    const activeSeedlings = nurserySchedule
+      .filter((batch) => batch.seedWeek <= week && batch.transplantWeek > week)
+      .reduce((sum, batch) => sum + batch.seedlings, 0)
+    const utilizationPercent =
+      farm.nurseryCapacity > 0
+        ? Math.round((activeSeedlings / farm.nurseryCapacity) * 100)
+        : 0
+
+    return {
+      week,
+      activeSeedlings,
+      capacity: farm.nurseryCapacity,
+      utilizationPercent,
+      risk: getRiskFromUtilization(utilizationPercent),
+    }
+  })
+
+  const peakNurseryWeek = nurseryLoad.reduce(
+    (peak, week) => (week.activeSeedlings > peak.activeSeedlings ? week : peak),
+    nurseryLoad[0] ?? {
+      week: 1,
+      activeSeedlings: 0,
+      capacity: farm.nurseryCapacity,
+      utilizationPercent: 0,
+      risk: 'Low' as const,
+    },
+  )
+
+  const nurseryStatusByTransplantWeek = new Map<number, NurseryBatch['status']>()
+  nurseryLoad.forEach((week) => {
+    const status =
+      week.risk === 'High' ? 'Over capacity' : week.risk === 'Medium' ? 'At capacity' : 'Scheduled'
+    nurseryStatusByTransplantWeek.set(week.week + 1, status)
+  })
+
+  const normalizedSchedule = nurserySchedule.map((batch) => ({
+    ...batch,
+    status: nurseryStatusByTransplantWeek.get(batch.transplantWeek) ?? 'Scheduled',
+  }))
 
   const cellOwners: Array<CropId | null> = Array.from({ length: availableCapacity }, () => null)
   const allIndexes = Array.from({ length: availableCapacity }, (_, idx) => idx)
@@ -251,6 +373,11 @@ export function generatePlanData({
     requiredCapacity,
     availableCapacity,
     stockoutRisk,
+    seedlingCapacityRisk: peakNurseryWeek.risk,
     expectedRevenue: revenue * 4,
+    cropSummaries,
+    timelineRows,
+    nurserySchedule: normalizedSchedule,
+    nurseryLoad,
   }
 }

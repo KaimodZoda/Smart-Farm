@@ -13,7 +13,7 @@ import {
 import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
 import { StepActions } from '../components/StepActions'
-import { cropLibrary, type CropId } from '../constants/crops'
+import type { CropId } from '../constants/crops'
 import { generatePlanData } from '../lib/planGenerator'
 import { setupSteps } from '../constants/setupSteps'
 import type { GeneratedPlanData, GoalData, SetupFarmData } from '../types/planning'
@@ -35,11 +35,6 @@ export function ConfirmPlanPage({
   onBackToGenerate,
   onConfirm,
 }: ConfirmPlanPageProps) {
-  const selectedCrops = useMemo(
-    () => cropLibrary.filter((crop) => selectedCropIds.includes(crop.id)),
-    [selectedCropIds],
-  )
-
   const resolvedPlan = useMemo(
     () =>
       generatedPlan ??
@@ -52,15 +47,8 @@ export function ConfirmPlanPage({
   )
 
   const timelineRows = useMemo(() => {
-    return selectedCrops.map((crop, idx) => ({
-      id: crop.id,
-      name: crop.name,
-      color: crop.accent,
-      plantingStart: 1 + (idx % 2),
-      growingSpan: 3 + (idx % 2),
-      harvestSpan: 1,
-    }))
-  }, [selectedCrops])
+    return resolvedPlan.timelineRows
+  }, [resolvedPlan.timelineRows])
 
   const accountInitials =
     farm.farmName
@@ -111,8 +99,8 @@ export function ConfirmPlanPage({
                 <span className="kpi-icon warn">
                   <RefreshCcw size={18} />
                 </span>
-                <p>Re-plan suggested</p>
-                <strong>{resolvedPlan.utilizationPercent >= 95 ? 'Yes' : 'No'}</strong>
+                <p>Nursery risk</p>
+                <strong>{resolvedPlan.seedlingCapacityRisk}</strong>
               </article>
             </div>
 
@@ -147,20 +135,28 @@ export function ConfirmPlanPage({
                     ))}
                   </div>
                   {timelineRows.map((row) => (
-                    <div key={row.id} className="timeline-row-confirm">
-                      <span>{row.name}</span>
+                    <div key={row.cropId} className="timeline-row-confirm">
+                      <span>{row.label}</span>
                       <div className="timeline-track-confirm">
                         <i
                           style={{
-                            gridColumn: `${row.plantingStart} / span ${row.growingSpan}`,
-                            backgroundColor: row.color,
+                            gridColumn: `${row.seedWeek} / span 1`,
+                            backgroundColor: '#dce9ff',
                           }}
                         >
-                          Growing
+                          Seed
                         </i>
                         <i
                           style={{
-                            gridColumn: `${row.plantingStart + row.growingSpan} / span ${row.harvestSpan}`,
+                            gridColumn: `${row.transplantWeek} / span ${row.growWeeks}`,
+                            backgroundColor: row.color,
+                          }}
+                        >
+                          Grow
+                        </i>
+                        <i
+                          style={{
+                            gridColumn: `${row.harvestWeek} / span 1`,
                             backgroundColor: '#c7e7d0',
                           }}
                         >
@@ -173,6 +169,40 @@ export function ConfirmPlanPage({
                 <p>
                   <Info size={14} />
                   Plan accounts for crop rotation, resource availability, and market demand.
+                </p>
+              </section>
+
+              <section className="confirm-timeline-card">
+                <header>
+                  <h2>Nursery Queue</h2>
+                  <CalendarDays size={16} />
+                </header>
+                <div className="confirm-timeline-table nursery-load-table">
+                  <div className="timeline-head nursery-load-head">
+                    <span>Week</span>
+                    {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                      <b key={item.week}>W{item.week}</b>
+                    ))}
+                  </div>
+                  <div className="timeline-row-confirm nursery-load-row-confirm">
+                    <span>Load</span>
+                    <div className="timeline-track-confirm nursery-track-confirm">
+                      {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                        <i
+                          key={item.week}
+                          className={`risk-${item.risk.toLowerCase()}`}
+                          style={{ gridColumn: `${item.week} / span 1` }}
+                        >
+                          {item.activeSeedlings}
+                        </i>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p>
+                  <Info size={14} />
+                  Nursery capacity is {farm.nurseryCapacity} seedlings with a lead time of{' '}
+                  {farm.seedlingLeadDays} days.
                 </p>
               </section>
             </div>
@@ -202,6 +232,10 @@ export function ConfirmPlanPage({
                 <li>
                   <CheckCircle2 size={14} />
                   Harvest windows are staggered for smoother operations.
+                </li>
+                <li>
+                  <CheckCircle2 size={14} />
+                  Nursery batches are scheduled {Math.ceil(farm.seedlingLeadDays / 7)} weeks ahead of transplant.
                 </li>
               </ul>
             </section>

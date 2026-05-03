@@ -798,6 +798,23 @@
   margin-top: 16px;
 }
 
+.nursery-summary-bar {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #d6e3db;
+  border-radius: 8px;
+  background: #f7fbf8;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  color: #4c6274;
+  font-size: 0.88rem;
+}
+
+.nursery-summary-bar strong {
+  color: #0f7c46;
+}
+
 .setup-primary-actions {
   display: flex;
   justify-content: space-between;
@@ -1212,6 +1229,23 @@
 .goal-input-row input[type='range'] {
   width: 100%;
   accent-color: #108749;
+}
+
+.goal-derived-row {
+  margin-top: 10px;
+  border-top: 1px solid #e2ebe5;
+  padding-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  color: #597083;
+  font-size: 0.85rem;
+}
+
+.goal-derived-row strong {
+  color: #116f40;
+  font-size: 1rem;
 }
 
 .target-row {
@@ -1657,10 +1691,61 @@
   border-radius: 999px;
 }
 
+.nursery-mini-timeline .mini-months {
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.nursery-load-row .mini-row-track {
+  height: 14px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+}
+
+.nursery-load-bar {
+  min-height: 14px;
+}
+
+.nursery-load-bar.risk-low {
+  background: #91d58d;
+}
+
+.nursery-load-bar.risk-medium {
+  background: #f0c46a;
+}
+
+.nursery-load-bar.risk-high {
+  background: #e48b78;
+}
+
+.nursery-batch-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.nursery-batch-list article {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  color: #42596c;
+  font-size: 0.82rem;
+}
+
+.nursery-batch-list b {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.nursery-batch-list strong {
+  color: #1f3445;
+}
+
 .generate-metrics {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1694,6 +1779,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.generate-note.warn {
+  border-color: #f0d9b8;
+  background: #fff8ee;
+  color: #9d5c0d;
 }
 
 .confirm-main {
@@ -1877,6 +1968,21 @@
   display: grid;
   place-items: center;
   border-radius: 5px;
+}
+
+.nursery-track-confirm i.risk-low {
+  background: #daf1de;
+  color: #126f40;
+}
+
+.nursery-track-confirm i.risk-medium {
+  background: #fff0cf;
+  color: #9f620f;
+}
+
+.nursery-track-confirm i.risk-high {
+  background: #fce1d8;
+  color: #a14c25;
 }
 
 .confirm-timeline-card p {
@@ -2067,7 +2173,7 @@
 .dashboard-kpis {
   margin-top: 2px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -2195,6 +2301,11 @@
   border-radius: 8px;
   background: #fbfefc;
   padding: 9px;
+}
+
+.nursery-insight-card article small {
+  color: #107944;
+  font-weight: 700;
 }
 
 .crop-mix-card h3,

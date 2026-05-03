@@ -108,6 +108,32 @@ export function DashboardPage({
     })
   }, [gridCells, selectedCrops])
 
+  const nextSeedWeek = resolvedPlan.nurseryLoad.find((item) => item.activeSeedlings > 0)?.week ?? 1
+  const nextSeedBatch = useMemo(() => {
+    return resolvedPlan.nurserySchedule
+      .filter((batch) => batch.seedWeek === nextSeedWeek)
+      .reduce((sum, batch) => sum + batch.seedlings, 0)
+  }, [nextSeedWeek, resolvedPlan.nurserySchedule])
+
+  const readyToTransplant = useMemo(() => {
+    return resolvedPlan.nurserySchedule
+      .filter((batch) => batch.transplantWeek === nextSeedWeek + 1)
+      .reduce((sum, batch) => sum + batch.seedlings, 0)
+  }, [nextSeedWeek, resolvedPlan.nurserySchedule])
+
+  const peakNurseryLoad = useMemo(() => {
+    return resolvedPlan.nurseryLoad.reduce(
+      (peak, item) => (item.activeSeedlings > peak.activeSeedlings ? item : peak),
+      resolvedPlan.nurseryLoad[0] ?? {
+        week: 1,
+        activeSeedlings: 0,
+        capacity: farm.nurseryCapacity,
+        utilizationPercent: 0,
+        risk: 'Low' as const,
+      },
+    )
+  }, [farm.nurseryCapacity, resolvedPlan.nurseryLoad])
+
   return (
     <main className="dashboard-shell">
       <aside className="dashboard-side">
@@ -160,6 +186,10 @@ export function DashboardPage({
             <p>Stockout risk</p>
             <strong>{resolvedPlan.stockoutRisk}</strong>
           </article>
+          <article>
+            <p>Nursery risk</p>
+            <strong>{resolvedPlan.seedlingCapacityRisk}</strong>
+          </article>
           <article className="goal-kpi">
             <p>
               Goal: {primaryGoal} kg {primaryCrop?.name.toLowerCase() ?? 'crop'} / week
@@ -203,9 +233,34 @@ export function DashboardPage({
                           <span>{item.name}</span>
                         </div>
                         <p>{item.percent}%</p>
-                        <small>({item.count}/100)</small>
+                        <small>({item.count}/{gridCells.length})</small>
                       </article>
                     ))}
+                  </section>
+
+                  <section className="crop-mix-card nursery-insight-card">
+                    <h3>Nursery Queue</h3>
+                    <article>
+                      <div>
+                        <span>Next seeding batch</span>
+                      </div>
+                      <p>W{nextSeedWeek}</p>
+                      <small>{nextSeedBatch} seedlings</small>
+                    </article>
+                    <article>
+                      <div>
+                        <span>Ready to transplant</span>
+                      </div>
+                      <p>{readyToTransplant}</p>
+                      <small>next week</small>
+                    </article>
+                    <article>
+                      <div>
+                        <span>Peak nursery load</span>
+                      </div>
+                      <p>{peakNurseryLoad.activeSeedlings}</p>
+                      <small>W{peakNurseryLoad.week}</small>
+                    </article>
                   </section>
 
                   <section className="sensor-mini-card">
@@ -244,14 +299,14 @@ export function DashboardPage({
                 <h2>8-Week Plan</h2>
               </header>
               <div className="plan-mini-table">
-                {selectedCrops.map((crop, idx) => (
-                  <article key={crop.id} className="plan-mini-row">
-                    <strong>{crop.name}</strong>
+                {resolvedPlan.timelineRows.map((row) => (
+                  <article key={row.cropId} className="plan-mini-row">
+                    <strong>{row.label}</strong>
                     <div className="plan-mini-track">
                       <span
                         style={{
-                          backgroundColor: crop.accent,
-                          gridColumn: `${1 + (idx % 3)} / span ${3 + (idx % 2)}`,
+                          backgroundColor: row.color,
+                          gridColumn: `${row.transplantWeek} / span ${row.growWeeks}`,
                         }}
                       ></span>
                     </div>
@@ -273,20 +328,23 @@ export function DashboardPage({
               <p>
                 Goal: {primaryGoal} kg {primaryCrop?.name.toLowerCase() ?? 'crop'} / week
               </p>
-              <span>Reserve policy active</span>
+              <span>
+                Nursery peak {peakNurseryLoad.activeSeedlings}/{farm.nurseryCapacity} seedlings
+              </span>
             </section>
 
             <div className="chat-bubble user">
-              Why is Lettuce in A1-D5 and not in E1-E5?
+              What should I seed next week?
             </div>
             <div className="chat-bubble bot">
-              Lettuce is in A1-D5 because that zone has the most stable microclimate and helps hit
-              weekly target with lower delay risk.
+              Seed {nextSeedBatch} seedlings in Week {nextSeedWeek} so the nursery queue is ready
+              for the next transplant cycle. Peak nursery load stays at {peakNurseryLoad.activeSeedlings}
+              {' '}seedlings in Week {peakNurseryLoad.week}.
             </div>
 
             <div className="copilot-actions">
-              <button type="button">Explain risk</button>
-              <button type="button">Show alternatives</button>
+              <button type="button">Explain nursery risk</button>
+              <button type="button">Show safer batching</button>
             </div>
 
             <label className="copilot-input">

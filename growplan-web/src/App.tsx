@@ -27,6 +27,8 @@ const createInitialSetupFarmData = (): SetupFarmData => ({
   columns: 12,
   lightingZones: 3,
   irrigationZones: 2,
+  nurseryCapacity: 240,
+  seedlingLeadDays: 14,
   growingSystem: 'Hydroponic NFT',
   lightingAssignments: [],
   irrigationAssignments: [],

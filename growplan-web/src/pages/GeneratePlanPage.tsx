@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Sparkles,
   Sprout,
+  Waves,
 } from 'lucide-react'
 import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
@@ -55,8 +56,9 @@ export function GeneratePlanPage({
   const analysisSteps = [
     { label: 'Analyzing farm layout', progress: 100, status: 'done' as const, icon: LayoutGrid },
     { label: 'Balancing crop cycles', progress: 100, status: 'done' as const, icon: Sprout },
-    { label: 'Optimizing grid allocation', progress: 78, status: 'running' as const, icon: Sparkles },
-    { label: 'Forecasting harvest schedule', progress: 20, status: 'pending' as const, icon: CalendarDays },
+    { label: 'Optimizing grid allocation', progress: 100, status: 'done' as const, icon: Sparkles },
+    { label: 'Scheduling seedling batches', progress: 82, status: 'running' as const, icon: Waves },
+    { label: 'Forecasting harvest schedule', progress: 52, status: 'pending' as const, icon: CalendarDays },
   ]
 
   const accountInitials =
@@ -185,6 +187,39 @@ export function GeneratePlanPage({
               </div>
             </div>
 
+            <div className="mini-timeline nursery-mini-timeline">
+              <h3>Nursery Load</h3>
+              <div className="mini-months">
+                {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                  <span key={item.week}>W{item.week}</span>
+                ))}
+              </div>
+              <div className="mini-rows nursery-mini-rows">
+                <article className="mini-row nursery-load-row">
+                  <small>Active</small>
+                  <div className="mini-row-track">
+                    {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                      <span
+                        key={item.week}
+                        className={`nursery-load-bar risk-${item.risk.toLowerCase()}`}
+                        style={{ gridColumn: `${item.week} / span 1` }}
+                        title={`${item.activeSeedlings} seedlings in Week ${item.week}`}
+                      ></span>
+                    ))}
+                  </div>
+                </article>
+              </div>
+              <div className="nursery-batch-list">
+                {resolvedPlan.cropSummaries.map((summary) => (
+                  <article key={summary.cropId}>
+                    <b style={{ backgroundColor: summary.color }}></b>
+                    <span>{summary.label}</span>
+                    <strong>{summary.seedlingsPerWeek}/week</strong>
+                  </article>
+                ))}
+              </div>
+            </div>
+
             <div className="generate-metrics">
               <article>
                 <p>Utilization</p>
@@ -198,12 +233,22 @@ export function GeneratePlanPage({
                 <p>Expected revenue</p>
                 <strong>${(resolvedPlan.expectedRevenue / 1000).toFixed(1)}k</strong>
               </article>
+              <article>
+                <p>Nursery risk</p>
+                <strong>{resolvedPlan.seedlingCapacityRisk}</strong>
+              </article>
             </div>
 
             <div className="generate-note">
               <ShieldCheck size={16} />
               Required {resolvedPlan.requiredCapacity.toFixed(0)} grids/week vs available{' '}
               {resolvedPlan.availableCapacity} grids/week.
+            </div>
+
+            <div className={`generate-note ${resolvedPlan.seedlingCapacityRisk === 'High' ? 'warn' : ''}`}>
+              <Waves size={16} />
+              Peak nursery load {Math.max(...resolvedPlan.nurseryLoad.map((item) => item.activeSeedlings), 0)} seedlings vs capacity{' '}
+              {farm.nurseryCapacity}.
             </div>
           </aside>
         </section>

@@ -4,6 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
 import { StepActions } from '../components/StepActions'
 import { cropLibrary, type CropId } from '../constants/crops'
+import { generatePlanData } from '../lib/planGenerator'
 import { setupSteps } from '../constants/setupSteps'
 import type { CropGoalsById, GoalData, GoalPriority, SetupFarmData } from '../types/planning'
 
@@ -64,6 +65,37 @@ export function DefineGoalPage({
       exceeded: requiredGridPerWeek > availableCapacityPerWeek,
     }
   }, [cropGoals, farm.columns, farm.rows, selectedCrops])
+
+  const planPreview = useMemo(
+    () =>
+      generatePlanData({
+        farm,
+        selectedCropIds,
+        goalData: {
+          planningHorizon,
+          priority,
+          cropGoals,
+        },
+      }),
+    [cropGoals, farm, planningHorizon, priority, selectedCropIds],
+  )
+
+  const totalSeedlingsPerWeek = useMemo(() => {
+    return planPreview.cropSummaries.reduce((sum, summary) => sum + summary.seedlingsPerWeek, 0)
+  }, [planPreview.cropSummaries])
+
+  const peakNurseryWeek = useMemo(() => {
+    return planPreview.nurseryLoad.reduce(
+      (peak, week) => (week.activeSeedlings > peak.activeSeedlings ? week : peak),
+      planPreview.nurseryLoad[0] ?? {
+        week: 1,
+        activeSeedlings: 0,
+        capacity: farm.nurseryCapacity,
+        utilizationPercent: 0,
+        risk: 'Low' as const,
+      },
+    )
+  }, [farm.nurseryCapacity, planPreview.nurseryLoad])
 
   const updateTarget = (cropId: CropId, nextValue: number) => {
     const safeTarget = Math.max(0, nextValue || 0)
@@ -160,6 +192,14 @@ export function DefineGoalPage({
                           />
                         </label>
                       </div>
+
+                      <div className="goal-derived-row">
+                        <span>Estimated seedlings / week</span>
+                        <strong>
+                          {planPreview.cropSummaries.find((summary) => summary.cropId === crop.id)
+                            ?.seedlingsPerWeek ?? 0}
+                        </strong>
+                      </div>
                     </article>
                   )
                 })}
@@ -242,6 +282,14 @@ export function DefineGoalPage({
                   <small>Primary objective</small>
                 </div>
               </article>
+              <article>
+                <Sparkles size={22} />
+                <div>
+                  <p>Seedlings / week</p>
+                  <strong>{totalSeedlingsPerWeek}</strong>
+                  <small>Derived from crop rotation and reserve</small>
+                </div>
+              </article>
             </div>
 
             <div className={`goal-alert ${capacityState.exceeded ? 'warning' : 'ok'}`}>
@@ -253,6 +301,20 @@ export function DefineGoalPage({
               <span>
                 Required ~{capacityState.requiredGridPerWeek.toFixed(0)} grids/week vs available{' '}
                 {capacityState.availableCapacityPerWeek} grids/week.
+              </span>
+            </div>
+
+            <div
+              className={`goal-alert ${planPreview.seedlingCapacityRisk === 'High' ? 'warning' : 'ok'}`}
+            >
+              <p>
+                {planPreview.seedlingCapacityRisk === 'High'
+                  ? 'Nursery capacity risk detected'
+                  : 'Nursery capacity is within range'}
+              </p>
+              <span>
+                Peak nursery load is {peakNurseryWeek.activeSeedlings} seedlings in Week{' '}
+                {peakNurseryWeek.week} vs capacity {farm.nurseryCapacity}.
               </span>
             </div>
 
