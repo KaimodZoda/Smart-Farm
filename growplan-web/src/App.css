@@ -2659,6 +2659,13 @@
   margin-right: 20px;
 }
 
+.chat-bubble.bot.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #4c6375;
+}
+
 .copilot-actions {
   margin-top: 14px;
   display: flex;
@@ -2682,6 +2689,14 @@
   border-color: #148f4e;
   background: #f2faf5;
   color: #107e44;
+}
+
+.copilot-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #d9e4dd;
+  color: #8093a2;
+  background: #f7faf8;
 }
 
 .copilot-input-visual {

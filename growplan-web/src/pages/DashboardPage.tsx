@@ -10,6 +10,7 @@ import {
   Grid3X3,
   Leaf,
   MessageSquare,
+  LoaderCircle,
   Send,
   ShieldCheck,
   Sprout,
@@ -83,12 +84,22 @@ export function DashboardPage({
       text: 'Hello! I am your AgriMatrix Copilot. How can I help with your plan today?',
     },
   ])
+  const [isCopilotThinking, setIsCopilotThinking] = useState(false)
+  const thinkingTimerRef = useRef<number | null>(null)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chatHistory])
+  }, [chatHistory, isCopilotThinking])
+
+  useEffect(() => {
+    return () => {
+      if (thinkingTimerRef.current !== null) {
+        window.clearTimeout(thinkingTimerRef.current)
+      }
+    }
+  }, [])
 
   const accountInitials =
     farm.farmName
@@ -160,6 +171,8 @@ export function DashboardPage({
   const secondaryCropName = secondaryCrop?.name ?? 'Crop'
 
   const handleAsk = (question: string) => {
+    if (isCopilotThinking) return
+
     let response = "I'm analyzing the data..."
 
     if (question.includes(secondaryCropName) && (question.includes('edge') || question.includes('placed'))) {
@@ -176,11 +189,17 @@ export function DashboardPage({
       response = `In Week ${nextSeedWeek}, you should seed ${nextSeedBatch} seedlings. This ensures they are ready for transplanting after the ${farm.seedlingLeadDays}-day lead time.`
     }
 
-    setChatHistory(prev => [
+    setChatHistory((prev) => [
       ...prev,
       { role: 'user', text: question },
-      { role: 'bot', text: response }
     ])
+    setIsCopilotThinking(true)
+
+    thinkingTimerRef.current = window.setTimeout(() => {
+      setChatHistory((prev) => [...prev, { role: 'bot', text: response }])
+      setIsCopilotThinking(false)
+      thinkingTimerRef.current = null
+    }, 950)
   }
 
   return (
@@ -432,26 +451,40 @@ export function DashboardPage({
                   {msg.text}
                 </div>
               ))}
+              {isCopilotThinking ? (
+                <div className="chat-bubble bot thinking">
+                  <LoaderCircle size={14} className="spin" />
+                  AgriMatrix is thinking...
+                </div>
+              ) : null}
               <div ref={chatEndRef} />
             </div>
 
             <div className="copilot-actions">
-              <button type="button" onClick={() => handleAsk(`Why is ${secondaryCropName} placed here?`)}>
+              <button
+                type="button"
+                disabled={isCopilotThinking}
+                onClick={() => handleAsk(`Why is ${secondaryCropName} placed here?`)}
+              >
                 Why is {secondaryCropName} placed here?
               </button>
-              <button type="button" onClick={() => handleAsk('What are the current risks?')}>
+              <button type="button" disabled={isCopilotThinking} onClick={() => handleAsk('What are the current risks?')}>
                 Explain risk
               </button>
-              <button type="button" onClick={() => handleAsk('Why is this plan 100% utilized?')}>
+              <button
+                type="button"
+                disabled={isCopilotThinking}
+                onClick={() => handleAsk('Why is this plan 100% utilized?')}
+              >
                 Why 100% utilized?
               </button>
-              <button type="button" onClick={() => handleAsk('What should I seed next week?')}>
+              <button type="button" disabled={isCopilotThinking} onClick={() => handleAsk('What should I seed next week?')}>
                 What to seed?
               </button>
             </div>
 
             <div className="copilot-input-visual">
-              <p>Select a prompt above to interact</p>
+              <p>{isCopilotThinking ? 'AI is drafting a response...' : 'Select a prompt above to interact'}</p>
               <Send size={16} />
             </div>
 
