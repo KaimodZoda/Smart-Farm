@@ -155,15 +155,23 @@ export function DashboardPage({
   }, [farm.nurseryCapacity, resolvedPlan.nurseryLoad])
   const nurseryLoadWeeks = useMemo(() => resolvedPlan.nurseryLoad.slice(0, 8), [resolvedPlan.nurseryLoad])
 
+  const primaryCropName = primaryCrop?.name ?? 'Crop'
+  const secondaryCrop = selectedCrops[1] || selectedCrops[0]
+  const secondaryCropName = secondaryCrop?.name ?? 'Crop'
+
   const handleAsk = (question: string) => {
     let response = "I'm analyzing the data..."
 
-    if (question.includes('Mint')) {
-      response = 'Mint is placed at the edge because it has a spreading growth habit. Keeping it isolated prevents it from competing with more compact crops like Lettuce.'
+    if (question.includes(secondaryCropName) && (question.includes('edge') || question.includes('placed'))) {
+      if (secondaryCrop?.id === 'mint') {
+        response = 'Mint is placed at the edge because it has a spreading growth habit. Keeping it isolated prevents it from competing with more compact crops.'
+      } else {
+        response = `${secondaryCropName} is positioned to optimize light and water zone compatibility while maintaining 100% space utilization across your grid.`
+      }
     } else if (question.includes('100%')) {
       response = `The plan targets 100% utilization to maximize your space. Every available grid in your ${farm.rows}x${farm.columns} setup is assigned a crop based on your goal.`
     } else if (question.toLowerCase().includes('risk')) {
-      response = `The primary risks are: 1) A detected 5-day delay in Lettuce growth, and 2) Nursery load reaching ${peakNurseryLoad.activeSeedlings} seedlings (${peakNurseryLoad.utilizationPercent}%) in Week ${peakNurseryLoad.week}.`
+      response = `The primary risks are: 1) A detected 5-day delay in ${primaryCropName} growth, and 2) Nursery load reaching ${peakNurseryLoad.activeSeedlings} seedlings (${peakNurseryLoad.utilizationPercent}%) in Week ${peakNurseryLoad.week}.`
     } else if (question.includes('seed next week')) {
       response = `In Week ${nextSeedWeek}, you should seed ${nextSeedBatch} seedlings. This ensures they are ready for transplanting after the ${farm.seedlingLeadDays}-day lead time.`
     }
@@ -238,7 +246,7 @@ export function DashboardPage({
             <span>{Math.max(78, Math.min(97, resolvedPlan.utilizationPercent - 3))}% target progress</span>
           </article>
           <button type="button" className="risk-kpi replan-trigger" onClick={onOpenReplan}>
-            <p>Risk: lettuce delay +5 days</p>
+            <p>Risk: {primaryCropName.toLowerCase()} delay +5 days</p>
             <strong>Re-plan suggested</strong>
           </button>
         </section>
@@ -428,8 +436,8 @@ export function DashboardPage({
             </div>
 
             <div className="copilot-actions">
-              <button type="button" onClick={() => handleAsk('Why is Mint placed at the edge?')}>
-                Why is Mint at the edge?
+              <button type="button" onClick={() => handleAsk(`Why is ${secondaryCropName} placed here?`)}>
+                Why is {secondaryCropName} placed here?
               </button>
               <button type="button" onClick={() => handleAsk('What are the current risks?')}>
                 Explain risk

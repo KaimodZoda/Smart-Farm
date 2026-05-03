@@ -27,51 +27,16 @@ type ReplanPageProps = {
   onApplyPlan: (plan: GeneratedPlanData) => void
 }
 
-const replanSteps = [
-  { id: 1, title: 'Confirmed Plan', subtitle: 'Use the locked dashboard plan' },
-  { id: 2, title: 'Incident', subtitle: 'Lettuce delay detected' },
-  { id: 3, title: 'Re-plan', subtitle: 'Update schedule and nursery load' },
-  { id: 4, title: 'Apply', subtitle: 'Send suggestion back to dashboard' },
-]
-
-const getNurseryRisk = (utilizationPercent: number): NurseryLoadWeek['risk'] => {
-  if (utilizationPercent >= 100) return 'High'
-  if (utilizationPercent >= 80) return 'Medium'
-  return 'Low'
-}
-
-const rebuildNurseryLoad = ({
-  batches,
-  horizonWeeks,
-  capacity,
-}: {
-  batches: NurseryBatch[]
-  horizonWeeks: number
-  capacity: number
-}): NurseryLoadWeek[] => {
-  return Array.from({ length: horizonWeeks }, (_, weekIndex) => {
-    const week = weekIndex + 1
-    const activeSeedlings = batches
-      .filter((batch) => batch.seedWeek <= week && batch.transplantWeek > week)
-      .reduce((sum, batch) => sum + batch.seedlings, 0)
-    const utilizationPercent = capacity > 0 ? Math.round((activeSeedlings / capacity) * 100) : 0
-
-    return {
-      week,
-      activeSeedlings,
-      capacity,
-      utilizationPercent,
-      risk: getNurseryRisk(utilizationPercent),
-    }
-  })
-}
-
-const createLettuceDelayReplan = (plan: GeneratedPlanData, farm: SetupFarmData): GeneratedPlanData => {
+const createCropDelayReplan = (
+  plan: GeneratedPlanData,
+  farm: SetupFarmData,
+  delayedCropId: CropId,
+): GeneratedPlanData => {
   const horizonWeeks = Math.max(8, plan.nurseryLoad.length)
   const seedlingLeadWeeks = Math.max(1, Math.ceil(farm.seedlingLeadDays / 7))
 
   const timelineRows = plan.timelineRows.map((row) => {
-    if (row.cropId !== 'lettuce') return row
+    if (row.cropId !== delayedCropId) return row
 
     const transplantWeek = Math.min(horizonWeeks, row.transplantWeek + 1)
     const harvestWeek = Math.min(horizonWeeks, row.harvestWeek + 1)
@@ -85,7 +50,7 @@ const createLettuceDelayReplan = (plan: GeneratedPlanData, farm: SetupFarmData):
   })
 
   const shiftedSchedule = plan.nurserySchedule.map((batch) => {
-    if (batch.cropId !== 'lettuce') return batch
+    if (batch.cropId !== delayedCropId) return batch
 
     const transplantWeek = Math.min(horizonWeeks, batch.transplantWeek + 1)
     const seedWeek = Math.max(1, transplantWeek - seedlingLeadWeeks)
@@ -148,6 +113,18 @@ export function ReplanPage({
     [selectedCropIds],
   )
 
+  const primaryCrop = selectedCrops[0] || cropLibrary[0]
+  const primaryCropName = primaryCrop.name
+  const secondaryCrop = selectedCrops[1] || selectedCrops[0] || cropLibrary[0]
+  const secondaryCropName = secondaryCrop.name
+
+  const replanSteps = useMemo(() => [
+    { id: 1, title: 'Confirmed Plan', subtitle: 'Use the locked dashboard plan' },
+    { id: 2, title: 'Incident', subtitle: `${primaryCropName} delay detected` },
+    { id: 3, title: 'Re-plan', subtitle: 'Update schedule and nursery load' },
+    { id: 4, title: 'Apply', subtitle: 'Send suggestion back to dashboard' },
+  ], [primaryCropName])
+
   const resolvedPlan = useMemo(
     () =>
       generatedPlan ??
@@ -160,8 +137,8 @@ export function ReplanPage({
   )
 
   const replannedPlan = useMemo(
-    () => createLettuceDelayReplan(resolvedPlan, farm),
-    [farm, resolvedPlan],
+    () => createCropDelayReplan(resolvedPlan, farm, primaryCrop.id),
+    [farm, resolvedPlan, primaryCrop.id],
   )
 
   const peakNurseryLoad = useMemo(() => {
@@ -179,8 +156,8 @@ export function ReplanPage({
 
   const analysisSteps = [
     { label: 'Locking confirmed farm grid', progress: 100, status: 'done' as const, icon: LayoutGrid },
-    { label: 'Reading incident: Lettuce delay +5 days', progress: 100, status: 'done' as const, icon: AlertTriangle },
-    { label: 'Shifting Lettuce grow and harvest window', progress: 100, status: 'done' as const, icon: Sprout },
+    { label: `Reading incident: ${primaryCropName} delay +5 days`, progress: 100, status: 'done' as const, icon: AlertTriangle },
+    { label: `Shifting ${primaryCropName} grow and harvest window`, progress: 100, status: 'done' as const, icon: Sprout },
     { label: 'Rebalancing nursery queue', progress: 88, status: 'running' as const, icon: Waves },
     { label: 'Preparing operator-facing explanation', progress: 62, status: 'pending' as const, icon: CalendarDays },
   ]
@@ -211,7 +188,7 @@ export function ReplanPage({
               </span>
               <div>
                 <p>Risk scenario</p>
-                <strong>Lettuce delay +5 days</strong>
+                <strong>{primaryCropName} delay +5 days</strong>
               </div>
             </div>
 
@@ -221,7 +198,7 @@ export function ReplanPage({
               </div>
               <h2>Building a safer schedule</h2>
               <p>
-                The grid stays locked while AgriMatrix shifts the Lettuce window and recalculates
+                The grid stays locked while AgriMatrix shifts the {primaryCropName} window and recalculates
                 nursery load.
               </p>
 
@@ -257,8 +234,8 @@ export function ReplanPage({
             <div className="replan-explain-card">
               <h2>Suggested trade-off</h2>
               <p>
-                Lettuce moves one week later, Basil reserve stays protected, and Mint keeps its edge
-                placement. Revenue dips slightly, but the operator gets a clearer transplant queue.
+                {primaryCropName} moves one week later, {secondaryCropName} reserve stays protected, and the original layout is maintained. 
+                Revenue dips slightly, but the operator gets a clearer transplant queue.
               </p>
             </div>
 
@@ -273,7 +250,7 @@ export function ReplanPage({
           <aside className="generate-preview-card">
             <header>
               <h2>Updated Plan Preview</h2>
-              <p>Lettuce delay scenario applied</p>
+              <p>{primaryCropName} delay scenario applied</p>
             </header>
 
             <div className="generate-legend">
@@ -292,7 +269,7 @@ export function ReplanPage({
               {replannedPlan.cells.map((cell, index) => (
                 <span
                   key={index}
-                  className={`generate-grid-cell ${cell.cropId === 'lettuce' ? 'delayed' : ''}`}
+                  className={`generate-grid-cell ${cell.cropId === primaryCrop.id ? 'delayed' : ''}`}
                   style={{ backgroundColor: cell.color }}
                   title={cell.label}
                 ></span>
@@ -386,12 +363,12 @@ export function ReplanPage({
 
             <div className="generate-note warn">
               <AlertTriangle size={16} />
-              Lettuce phases shift one week later to reflect the delay.
+              {primaryCropName} phases shift one week later to reflect the delay.
             </div>
 
             <div className="generate-note">
               <ShieldCheck size={16} />
-              Mint remains edge-placed and the original grid allocation stays locked.
+              Original grid allocation stays locked for all crops.
             </div>
           </aside>
         </section>
