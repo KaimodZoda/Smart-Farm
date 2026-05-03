@@ -27,6 +27,38 @@ type ReplanPageProps = {
   onApplyPlan: (plan: GeneratedPlanData) => void
 }
 
+const getNurseryRisk = (utilizationPercent: number): NurseryLoadWeek['risk'] => {
+  if (utilizationPercent >= 100) return 'High'
+  if (utilizationPercent >= 80) return 'Medium'
+  return 'Low'
+}
+
+const rebuildNurseryLoad = ({
+  batches,
+  horizonWeeks,
+  capacity,
+}: {
+  batches: NurseryBatch[]
+  horizonWeeks: number
+  capacity: number
+}): NurseryLoadWeek[] => {
+  return Array.from({ length: horizonWeeks }, (_, weekIndex) => {
+    const week = weekIndex + 1
+    const activeSeedlings = batches
+      .filter((batch) => batch.seedWeek <= week && batch.transplantWeek > week)
+      .reduce((sum, batch) => sum + batch.seedlings, 0)
+    const utilizationPercent = capacity > 0 ? Math.round((activeSeedlings / capacity) * 100) : 0
+
+    return {
+      week,
+      activeSeedlings,
+      capacity,
+      utilizationPercent,
+      risk: getNurseryRisk(utilizationPercent),
+    }
+  })
+}
+
 const createCropDelayReplan = (
   plan: GeneratedPlanData,
   farm: SetupFarmData,
@@ -69,7 +101,7 @@ const createCropDelayReplan = (
   })
 
   const peakNurseryWeek = nurseryLoad.reduce(
-    (peak, week) => (week.activeSeedlings > peak.activeSeedlings ? week : peak),
+    (peak: NurseryLoadWeek, week: NurseryLoadWeek) => (week.activeSeedlings > peak.activeSeedlings ? week : peak),
     nurseryLoad[0] ?? {
       week: 1,
       activeSeedlings: 0,
@@ -80,7 +112,7 @@ const createCropDelayReplan = (
   )
 
   const statusByTransplantWeek = new Map<number, NurseryBatch['status']>()
-  nurseryLoad.forEach((week) => {
+  nurseryLoad.forEach((week: NurseryLoadWeek) => {
     const status =
       week.risk === 'High' ? 'Over capacity' : week.risk === 'Medium' ? 'At capacity' : 'Scheduled'
     statusByTransplantWeek.set(week.week + 1, status)
