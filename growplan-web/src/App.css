@@ -2514,8 +2514,16 @@
   overflow: hidden;
 }
 
-.plan-mini-track span {
+.plan-mini-track i {
   border-radius: 5px;
+  font-size: 0.63rem;
+  font-style: normal;
+  font-weight: 600;
+  color: #244052;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .dashboard-flow-strip {

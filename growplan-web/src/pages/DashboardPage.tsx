@@ -108,7 +108,7 @@ export function DashboardPage({
     })
   }, [gridCells, selectedCrops])
 
-  const nextSeedWeek = resolvedPlan.nurseryLoad.find((item) => item.activeSeedlings > 0)?.week ?? 1
+  const nextSeedWeek = resolvedPlan.nurseryLoad[0]?.week ?? 1
   const nextSeedBatch = useMemo(() => {
     return resolvedPlan.nurserySchedule
       .filter((batch) => batch.seedWeek === nextSeedWeek)
@@ -117,7 +117,7 @@ export function DashboardPage({
 
   const readyToTransplant = useMemo(() => {
     return resolvedPlan.nurserySchedule
-      .filter((batch) => batch.transplantWeek === nextSeedWeek + 1)
+      .filter((batch) => batch.transplantWeek === nextSeedWeek)
       .reduce((sum, batch) => sum + batch.seedlings, 0)
   }, [nextSeedWeek, resolvedPlan.nurserySchedule])
 
@@ -133,6 +133,7 @@ export function DashboardPage({
       },
     )
   }, [farm.nurseryCapacity, resolvedPlan.nurseryLoad])
+  const nurseryLoadWeeks = useMemo(() => resolvedPlan.nurseryLoad.slice(0, 8), [resolvedPlan.nurseryLoad])
 
   return (
     <main className="dashboard-shell">
@@ -252,7 +253,7 @@ export function DashboardPage({
                         <span>Ready to transplant</span>
                       </div>
                       <p>{readyToTransplant}</p>
-                      <small>next week</small>
+                      <small>this week</small>
                     </article>
                     <article>
                       <div>
@@ -303,15 +304,55 @@ export function DashboardPage({
                   <article key={row.cropId} className="plan-mini-row">
                     <strong>{row.label}</strong>
                     <div className="plan-mini-track">
-                      <span
+                      <i
+                        style={{
+                          gridColumn: `${row.seedWeek} / span 1`,
+                          backgroundColor: '#dce9ff',
+                        }}
+                      >
+                        Seed
+                      </i>
+                      <i
                         style={{
                           backgroundColor: row.color,
                           gridColumn: `${row.transplantWeek} / span ${row.growWeeks}`,
                         }}
-                      ></span>
+                      >
+                        Grow
+                      </i>
+                      <i
+                        style={{
+                          gridColumn: `${row.harvestWeek} / span 1`,
+                          backgroundColor: '#c7e7d0',
+                        }}
+                      >
+                        Harvest
+                      </i>
                     </div>
                   </article>
                 ))}
+              </div>
+              <div className="confirm-timeline-table nursery-load-table">
+                <div className="timeline-head nursery-load-head">
+                  <span>Nursery Load</span>
+                  {nurseryLoadWeeks.map((item) => (
+                    <b key={item.week}>W{item.week}</b>
+                  ))}
+                </div>
+                <div className="timeline-row-confirm nursery-load-row-confirm">
+                  <span>Seedlings</span>
+                  <div className="timeline-track-confirm nursery-track-confirm">
+                    {nurseryLoadWeeks.map((item) => (
+                      <i
+                        key={item.week}
+                        className={`risk-${item.risk.toLowerCase()}`}
+                        style={{ gridColumn: `${item.week} / span 1` }}
+                      >
+                        {item.activeSeedlings}
+                      </i>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
           </div>
