@@ -26,6 +26,7 @@ type DashboardPageProps = {
   goalData: GoalData
   generatedPlan: GeneratedPlanData | null
   onBackToConfirm: () => void
+  onOpenReplan: () => void
 }
 
 const sideItems = [
@@ -53,6 +54,7 @@ export function DashboardPage({
   goalData,
   generatedPlan,
   onBackToConfirm,
+  onOpenReplan,
 }: DashboardPageProps) {
   const selectedCrops = useMemo(
     () => cropLibrary.filter((crop) => selectedCropIds.includes(crop.id)),
@@ -197,10 +199,10 @@ export function DashboardPage({
             </p>
             <span>{Math.max(78, Math.min(97, resolvedPlan.utilizationPercent - 3))}% target progress</span>
           </article>
-          <article className="risk-kpi">
+          <button type="button" className="risk-kpi replan-trigger" onClick={onOpenReplan}>
             <p>Risk: lettuce delay +5 days</p>
             <strong>Re-plan suggested</strong>
-          </article>
+          </button>
         </section>
 
         <section className="dashboard-content">

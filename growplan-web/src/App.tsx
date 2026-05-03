@@ -6,6 +6,7 @@ import { DefineGoalPage } from './pages/DefineGoalPage'
 import { ConfirmPlanPage } from './pages/ConfirmPlanPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { GeneratePlanPage } from './pages/GeneratePlanPage'
+import { ReplanPage } from './pages/ReplanPage'
 import { SelectCropsPage } from './pages/SelectCropsPage'
 import { SetupFarmPage } from './pages/SetupFarmPage'
 import { WelcomePage } from './pages/WelcomePage'
@@ -19,6 +20,7 @@ type Page =
   | 'generate-plan'
   | 'confirm-plan'
   | 'dashboard'
+  | 'replan'
 
 const createInitialSetupFarmData = (): SetupFarmData => ({
   farmName: 'GreenRise Farm',
@@ -39,7 +41,7 @@ const createInitialCropGoals = (): CropGoalsById => {
     (acc, crop) => ({
       ...acc,
       [crop.id]: {
-        targetPerWeek: crop.defaultTargetPerWeek,
+        targetPerWeek: 0,
         reservePercent: crop.defaultReservePercent,
       },
     }),
@@ -70,6 +72,23 @@ function App() {
         goalData={goalData}
         generatedPlan={generatedPlan}
         onBackToConfirm={() => setPage('confirm-plan')}
+        onOpenReplan={() => setPage('replan')}
+      />
+    )
+  }
+
+  if (page === 'replan') {
+    return (
+      <ReplanPage
+        farm={setupFarmData}
+        selectedCropIds={selectedCropIds}
+        goalData={goalData}
+        generatedPlan={generatedPlan}
+        onBackToDashboard={() => setPage('dashboard')}
+        onApplyPlan={(nextPlan) => {
+          setGeneratedPlan(nextPlan)
+          setPage('dashboard')
+        }}
       />
     )
   }

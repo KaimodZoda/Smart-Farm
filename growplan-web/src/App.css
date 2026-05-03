@@ -1787,6 +1787,95 @@
   color: #9d5c0d;
 }
 
+.replan-main .generate-engine-card h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.replan-incident-card {
+  margin-top: 12px;
+  border: 1px solid #f0d9b8;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff8ee;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.replan-incident-card span {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #f7dfbd;
+  color: #9d5c0d;
+}
+
+.replan-incident-card p {
+  margin: 0;
+  color: #9d5c0d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.replan-incident-card strong {
+  display: block;
+  margin-top: 3px;
+  color: #1f3445;
+  font-size: 1.35rem;
+}
+
+.replan-badge {
+  color: #9d5c0d;
+  background: radial-gradient(circle, #fff3df 0%, #f8dfb7 100%);
+}
+
+.replan-explain-card {
+  margin-top: 12px;
+  border: 1px solid #dce6e0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fcfa;
+}
+
+.replan-explain-card h2 {
+  margin: 0;
+  color: #213748;
+  font-size: 1.45rem;
+}
+
+.replan-explain-card p {
+  margin: 6px 0 0;
+  color: #607384;
+  line-height: 1.55;
+}
+
+.replan-grid .generate-grid-cell.delayed {
+  box-shadow: inset 0 0 0 2px #f8dfb7;
+}
+
+.replan-phase-timeline .plan-mini-table {
+  margin-top: 8px;
+}
+
+.replan-week-head {
+  margin-top: 10px;
+  margin-left: 98px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  color: #607384;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.replan-metrics strong {
+  font-size: 1.55rem;
+}
+
 .confirm-main {
   grid-template-columns: 1.4fr 340px;
   align-items: start;
@@ -2177,11 +2266,13 @@
   gap: 8px;
 }
 
-.dashboard-kpis article {
+.dashboard-kpis article,
+.dashboard-kpis > button {
   border: 1px solid #d5e1d9;
   border-radius: 8px;
   background: #ffffff;
   padding: 10px 12px;
+  text-align: left;
 }
 
 .dashboard-kpis p {
@@ -2217,6 +2308,23 @@
 .dashboard-kpis .risk-kpi {
   border-color: #e9d0b2;
   background: #fffaf3;
+}
+
+.dashboard-kpis .replan-trigger {
+  cursor: pointer;
+  font: inherit;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.dashboard-kpis .replan-trigger:hover,
+.dashboard-kpis .replan-trigger:focus-visible {
+  transform: translateY(-1px);
+  border-color: #dcaa72;
+  box-shadow: 0 10px 22px rgba(138, 82, 18, 0.14);
+  outline: none;
 }
 
 .dashboard-kpis .risk-kpi p {
