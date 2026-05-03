@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   Send,
   ShieldCheck,
+  Sparkles,
   Sprout,
   Thermometer,
   Waves,
@@ -28,16 +29,8 @@ type DashboardPageProps = {
   generatedPlan: GeneratedPlanData | null
   onBackToConfirm: () => void
   onOpenReplan: () => void
+  onOpenWorkSchedule: () => void
 }
-
-const sideItems = [
-  { label: 'Overview', icon: Grid3X3, active: true },
-  { label: 'Farm Grid', icon: Sprout },
-  { label: 'Plan', icon: CalendarDays },
-  { label: 'Crops', icon: Leaf },
-  { label: 'Sensors', icon: Waves },
-  { label: 'Alerts', icon: Bell },
-]
 
 const flowItems = [
   'Setup Farm',
@@ -61,7 +54,18 @@ export function DashboardPage({
   generatedPlan,
   onBackToConfirm,
   onOpenReplan,
+  onOpenWorkSchedule,
 }: DashboardPageProps) {
+  const sideItems = [
+    { label: 'Overview', icon: Grid3X3, active: true },
+    { label: 'Farm Grid', icon: Sprout },
+    { label: 'Plan', icon: CalendarDays },
+    { label: 'Work Schedule', icon: Sparkles, onClick: onOpenWorkSchedule },
+    { label: 'Crops', icon: Leaf },
+    { label: 'Sensors', icon: Waves },
+    { label: 'Alerts', icon: Bell },
+  ]
+
   const selectedCrops = useMemo(
     () => cropLibrary.filter((crop) => selectedCropIds.includes(crop.id)),
     [selectedCropIds],
@@ -213,7 +217,12 @@ export function DashboardPage({
           {sideItems.map((item) => {
             const Icon = item.icon
             return (
-              <button key={item.label} type="button" className={item.active ? 'active' : ''}>
+              <button
+                key={item.label}
+                type="button"
+                className={item.active ? 'active' : ''}
+                onClick={item.onClick}
+              >
                 <Icon size={18} />
                 <span>{item.label}</span>
               </button>

@@ -6,12 +6,16 @@ Build a 2-day hackathon PoC that follows the existing UI mockup flow:
 
 ```text
 Welcome
--> Setup Farm
--> Select Crops
--> Define Goal
--> Generate Plan
--> Confirm Plan
--> Dashboard / Re-plan
+-> For Employer
+   -> Setup Farm
+   -> Select Crops
+   -> Define Goal
+   -> Generate Plan
+   -> Confirm Plan
+   -> Dashboard / Re-plan
+   -> Work Schedule
+-> For Employee
+   -> Work Schedule (staff execution mode)
 ```
 
 Current implementation status:
@@ -20,6 +24,23 @@ Current implementation status:
 - Next: tighten plan logic, polish dashboard, and wire template re-plan behavior
 
 The wizard should feel stable and deterministic. The demo Copilot should appear only in the Dashboard / Re-plan experience, after the system has already generated and confirmed a plan.
+
+## Latest Interaction Updates (May 3, 2026)
+
+- `Define Goal` now uses sliders for both `Goal / week (kg)` and `Reserve (%)` per crop.
+- Goal slider scale is stable and does not shift when reserve changes.
+- Reserve slider is clamped by remaining capacity at interaction time, while keeping goal unchanged.
+- Goal summary includes a capacity progress bar and warning state when required grids approach limits.
+- `Generate Plan` now runs staged analysis progress sequentially (one step at a time).
+- `Draft Plan Preview` remains in `Processing...` state until all analysis steps complete.
+- `View Draft Plan` is disabled until generation is fully complete.
+- Dashboard Copilot now shows a short `thinking` state before returning each template response.
+- Copilot prompt chips are temporarily disabled while a response is being generated.
+- Welcome page should split entry by role:
+  - `For Employer` starts the full farm setup and planning wizard.
+  - `For Employee` opens the work schedule directly in staff execution mode.
+- Dashboard should include a `Work Schedule` tab for managers to review, assign, and explain AI-suggested tasks.
+- `Work Schedule` should support both manager overview and employee checklist views.
 
 ## Core Product Idea
 
@@ -137,13 +158,27 @@ Example plant attribute shape:
 
 ```text
 Welcome / Start
--> Setup Farm
--> Select Crops
--> Define Goal
--> Generate Plan
--> Confirm Plan
--> Dashboard / Re-plan
+-> For Employer
+   -> Setup Farm
+   -> Select Crops
+   -> Define Goal
+   -> Generate Plan
+   -> Confirm Plan
+   -> Dashboard / Re-plan
+   -> Work Schedule
+-> For Employee
+   -> Work Schedule
 ```
+
+Employer path:
+
+- The farm owner or manager creates the plan, confirms it, monitors the dashboard, and opens the `Work Schedule` tab to assign work.
+- This path proves AgriMatrix can turn farm constraints and production goals into an operational plan.
+
+Employee path:
+
+- A farm worker starts from the Welcome page, chooses `For Employee`, and lands directly on a simplified daily checklist.
+- This path proves the generated plan is actionable, not just analytical.
 
 ## Seedling / Nursery Strategy
 
@@ -159,22 +194,25 @@ Do not add a separate nursery page for the 2-day demo. Treat the nursery as a fa
 
 Purpose:
 
-Introduce AgriMatrix and start the demo.
+Introduce AgriMatrix and route users by role.
 
 Main UI:
 
 - Product name: AgriMatrix
 - Headline: Smart planting layouts for controlled farms
-- Subheadline: Set up your farm, choose crops, generate a plan, then use Copilot prompts to explain and re-plan after confirmation.
-- Primary CTA: Start Demo
+- Subheadline: Set up your farm, generate a plan, and turn it into daily work instructions.
+- Primary CTA: For Employer
+- Secondary CTA: For Employee
 - Visual preview:
   - Farm grid preview
   - Planting timeline preview
   - KPI preview
+  - Work schedule preview
 
 User action:
 
-- Click Start Demo
+- Click `For Employer` to enter Setup Farm and the full planning wizard.
+- Click `For Employee` to open the daily Work Schedule in staff mode.
 
 ## Page 2: Setup Farm
 
@@ -273,12 +311,13 @@ Main UI:
 
 - Wizard sidebar progress
 - Per-selected-crop goal inputs
-  - Goal per week (kg)
-  - Reserve percentage (%)
+  - Goal per week (kg) slider
+  - Reserve percentage (%) slider
 - Estimated seedlings needed per week
 - Planning horizon
 - Optimization priority segmented control
 - Goal summary panel
+  - Capacity progress bar
 - CTA: Generate Plan
 
 Recommended defaults:
@@ -340,6 +379,9 @@ Main UI:
 Behavior:
 
 - Show staged generation progress UI and draft preview.
+- Analysis steps should complete sequentially, one bar at a time.
+- Keep `Draft Plan Preview` in processing state until every analysis step reaches 100%.
+- Disable `View Draft Plan` until generation is complete.
 - Generate a deterministic draft plan preview from farm setup, selected crops, and per-crop goals.
 - Fill grid at 100% occupancy (no fallow cells) because empty lot is treated as lost profit.
 - Generate a nursery schedule before transplant dates, using the seedling lead time from Setup Farm.
@@ -489,6 +531,13 @@ Show the confirmed plan in an operating dashboard and let the user interact with
 Main UI:
 
 - KPI cards
+- Dashboard tab navigation:
+  - Overview
+  - Farm Grid
+  - Plan
+  - Work Schedule
+  - Sensors
+  - Alerts
 - Farm grid
 - Crop mix summary
 - Live sensor snapshot
@@ -518,6 +567,9 @@ Dashboard behavior:
 3. App selects the matching template response using farm setup, selected crops, goal, generated plan JSON, nursery schedule, reason tags, and current incident state.
 4. If the question requires changed positions, convert the user request into structured constraints and re-run the rule/layout engine.
 5. Template Copilot explains the existing or updated plan.
+6. When the user clicks a prompt chip, show a short "thinking" state before posting the template response.
+7. Disable prompt chips during the thinking state to avoid duplicate prompt submissions.
+8. Manager can click the `Work Schedule` tab to turn the confirmed plan into staff-ready tasks.
 
 Recommended demo Copilot implementation:
 
@@ -558,32 +610,148 @@ Because Lettuce is delayed by 5 days, the updated plan uses Basil reserve space 
 This reduces short-term stockout risk while keeping utilization above 90%.
 ```
 
+## Page 8: Work Schedule
+
+Purpose:
+
+Turn the confirmed plan into a daily operating schedule that managers can assign and employees can execute.
+
+Entry points:
+
+- From Dashboard: manager clicks the `Work Schedule` tab.
+- From Welcome: employee clicks `For Employee` and lands directly in staff execution mode.
+
+Manager mode:
+
+- Page title: AI Work Schedule
+- Role toggle or state: Owner / Staff
+- Date selector: Today / This Week
+- KPI strip:
+  - Tasks today
+  - Labor hours
+  - Nursery load
+  - Harvest ready
+- AI suggested schedule timeline
+- Task groups:
+  - Morning
+  - Midday
+  - Afternoon
+- Task cards:
+  - Seed 84 Lettuce seedlings
+  - Transplant Basil batch B-12
+  - Check Mint edge row
+  - Harvest Kale Zone 2
+  - Adjust EC in Zone A
+- Each task card should show:
+  - Priority
+  - Estimated time
+  - Assigned staff initials
+  - Zone / grid reference
+  - Completion checkbox
+- Staff workload progress bar
+- Nursery capacity progress bar
+- CTA: Assign Tasks
+- AI explanation panel:
+  - Why these tasks today?
+  - What changed from the plan?
+  - Which tasks reduce risk?
+
+Employee mode:
+
+- Simplified daily checklist only.
+- Show today's assigned tasks grouped by time window.
+- Hide owner-only metrics such as revenue and plan optimization details.
+- Emphasize:
+  - What to do
+  - Where to do it
+  - Estimated time
+  - Task priority
+  - Completion checkbox
+- Include a small context note when useful, for example:
+
+```text
+AI scheduled this seeding task today so the batch is ready for transplant after the 14-day lead time.
+```
+
+Recommended deterministic schedule generation:
+
+- Use `generatedPlan.nurserySchedule` to create seeding and transplant tasks.
+- Use `generatedPlan.timelineRows` to create grow / harvest tasks.
+- Use nursery capacity risk to create inspection or capacity-warning tasks.
+- Use dashboard incident state to create follow-up tasks such as checking delayed crop zones.
+- Use simple role assignment rules for the PoC:
+  - High-priority harvest and transplant tasks go to senior staff.
+  - Seeding and checking tasks go to available staff.
+  - Sensor adjustment tasks go to the operator role.
+
+Example schedule JSON:
+
+```json
+{
+  "date": "2026-05-03",
+  "mode": "manager",
+  "tasks": [
+    {
+      "id": "seed-lettuce-w1",
+      "title": "Seed 84 Lettuce seedlings",
+      "timeWindow": "Morning",
+      "priority": "High",
+      "estimatedMinutes": 35,
+      "assignee": "NK",
+      "zone": "Nursery Rack A",
+      "reason": "Keeps transplant timing aligned with 14-day lead time."
+    },
+    {
+      "id": "transplant-basil-b12",
+      "title": "Transplant Basil batch B-12",
+      "timeWindow": "Midday",
+      "priority": "Medium",
+      "estimatedMinutes": 45,
+      "assignee": "PP",
+      "zone": "Grid B2-B5",
+      "reason": "Maintains planned basil reserve buffer."
+    }
+  ]
+}
+```
+
+Mockup reference:
+
+```text
+growplan-ui-mockups/09-ai-work-schedule.png
+```
+
 ## Demo Script
 
 1. Open AgriMatrix.
-2. Show the Welcome page and click Start Demo.
-3. Confirm Setup Farm defaults: GreenRise Farm, 10 x 12 grid, 3 lighting zones, 2 irrigation zones, 240 seedling nursery capacity.
-4. Select Lettuce, Basil, and Mint.
-5. Define per-crop goals and reserve, then show estimated seedlings per week.
-6. Generate Plan.
-7. Show draft grid allocation, nursery schedule, timeline, utilization, and stockout risk.
-8. Confirm Plan.
-9. Land on Dashboard.
-10. Point out nursery queue, ready-to-transplant batch, and next seeding batch.
-11. Click Copilot prompt: Why is Mint placed at the edge?
-12. Simulate Lettuce delay +5 days.
-13. Show template re-plan explanation and updated plan suggestion.
+2. Show the Welcome page with two entry points: `For Employer` and `For Employee`.
+3. Click `For Employer` to start the manager planning flow.
+4. Confirm Setup Farm defaults: GreenRise Farm, 10 x 12 grid, 3 lighting zones, 2 irrigation zones, 240 seedling nursery capacity.
+5. Select Lettuce, Basil, and Mint.
+6. Define per-crop goals and reserve, then show estimated seedlings per week and capacity progress.
+7. Generate Plan and show the sequential analysis progress before `View Draft Plan` unlocks.
+8. Show draft grid allocation, nursery schedule, timeline, utilization, and stockout risk.
+9. Confirm Plan.
+10. Land on Dashboard.
+11. Point out nursery queue, ready-to-transplant batch, and next seeding batch.
+12. Click Copilot prompt: Why is Mint placed at the edge?
+13. Simulate Lettuce delay +5 days.
+14. Show template re-plan explanation and updated plan suggestion.
+15. Click the `Work Schedule` tab in Dashboard.
+16. Show AI-generated task schedule, staff workload, nursery capacity, and `Assign Tasks`.
+17. Return to Welcome and click `For Employee`.
+18. Land directly on staff Work Schedule mode and show the daily checklist view.
 
 Opening line:
 
 ```text
-AgriMatrix turns farm setup, nursery capacity, crop choices, and production goals into a planting plan operators can actually use.
+AgriMatrix turns farm setup, nursery capacity, crop choices, and production goals into a plan that owners can manage and staff can execute.
 ```
 
 Closing line:
 
 ```text
-The wizard keeps planting and seedling schedules stable, and the dashboard Copilot makes the confirmed plan explainable and adaptable.
+The wizard creates the plan, the dashboard explains and adapts it, and Work Schedule turns it into clear daily work for the team.
 ```
 
 ## Two-Day Build Plan
@@ -605,6 +773,8 @@ Day 2:
 - Build Confirm Plan UI
 - Build Dashboard / Re-plan UI
 - Add pre-defined Copilot prompts and template responses in Dashboard
+- Add `Work Schedule` tab in Dashboard for manager task assignment
+- Add `For Employee` route from Welcome into staff checklist mode
 - Keep optional LLM integration as a post-demo upgrade
 - Test all 15 non-empty crop combinations
 - Polish demo script and UI states
@@ -614,12 +784,15 @@ Day 2:
 The demo should make these points obvious:
 
 - The flow matches the mockups: Setup Farm, Select Crops, Define Goal, Generate Plan, Confirm Plan.
+- Welcome clearly separates `For Employer` and `For Employee` journeys.
 - User can select any non-empty combination of 4 crops.
 - Every valid selection generates a deterministic plan.
 - The confirmed plan includes actual plant positions, metrics, and timeline.
 - The confirmed plan includes nursery schedule, transplant timing, and seedling capacity risk.
 - The template Copilot appears in Dashboard / Re-plan only.
 - Copilot explanations stay consistent with the plan because the rule/layout engine remains the source of truth.
+- The `Work Schedule` page translates the confirmed plan into task cards that can be assigned to staff.
+- Employee mode shows an actionable checklist without exposing manager-only planning complexity.
 
 ## Deployment Note
 
@@ -637,3 +810,4 @@ If time allows:
 - Save generated plan to local storage
 - Toggle between grid view and pot view
 - Add downloadable PDF or CSV plan export
+- Add staff task completion history and handoff notes

@@ -10,6 +10,7 @@ import { ReplanPage } from './pages/ReplanPage'
 import { SelectCropsPage } from './pages/SelectCropsPage'
 import { SetupFarmPage } from './pages/SetupFarmPage'
 import { WelcomePage } from './pages/WelcomePage'
+import { WorkSchedulePage } from './pages/WorkSchedulePage'
 import type { CropGoalsById, GeneratedPlanData, GoalData, SetupFarmData } from './types/planning'
 
 type Page =
@@ -21,6 +22,8 @@ type Page =
   | 'confirm-plan'
   | 'dashboard'
   | 'replan'
+  | 'work-schedule-employer'
+  | 'work-schedule-employee'
 
 const createInitialSetupFarmData = (): SetupFarmData => ({
   farmName: 'GreenRise Farm',
@@ -73,6 +76,33 @@ function App() {
         generatedPlan={generatedPlan}
         onBackToConfirm={() => setPage('confirm-plan')}
         onOpenReplan={() => setPage('replan')}
+        onOpenWorkSchedule={() => setPage('work-schedule-employer')}
+      />
+    )
+  }
+
+  if (page === 'work-schedule-employer') {
+    return (
+      <WorkSchedulePage
+        farm={setupFarmData}
+        selectedCropIds={selectedCropIds}
+        goalData={goalData}
+        generatedPlan={generatedPlan}
+        mode="employer"
+        onBack={() => setPage('dashboard')}
+      />
+    )
+  }
+
+  if (page === 'work-schedule-employee') {
+    return (
+      <WorkSchedulePage
+        farm={setupFarmData}
+        selectedCropIds={selectedCropIds}
+        goalData={goalData}
+        generatedPlan={generatedPlan}
+        mode="employee"
+        onBack={() => setPage('welcome')}
       />
     )
   }
@@ -169,7 +199,12 @@ function App() {
     )
   }
 
-  return <WelcomePage onStartDemo={() => setPage('setup-farm')} />
+  return (
+    <WelcomePage
+      onOpenEmployer={() => setPage('setup-farm')}
+      onOpenEmployee={() => setPage('work-schedule-employee')}
+    />
+  )
 }
 
 export default App

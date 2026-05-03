@@ -1,7 +1,8 @@
 import { Cpu, Grid3X3, Leaf, ShieldCheck, Sparkles, Sprout } from 'lucide-react'
 
 type WelcomePageProps = {
-  onStartDemo: () => void
+  onOpenEmployer: () => void
+  onOpenEmployee: () => void
 }
 
 const previewCells = [
@@ -31,7 +32,7 @@ const previewCells = [
   'chili',
 ]
 
-export function WelcomePage({ onStartDemo }: WelcomePageProps) {
+export function WelcomePage({ onOpenEmployer, onOpenEmployee }: WelcomePageProps) {
   return (
     <main className="welcome-shell">
       <section className="welcome-content" aria-label="Welcome message">
@@ -47,14 +48,18 @@ export function WelcomePage({ onStartDemo }: WelcomePageProps) {
           Plan smarter <span>crop cycles</span> for controlled farms
         </h1>
         <p className="lead">
-          Select your crops, generate a practical planting layout, then ask AI
-          why it works or how to re-plan when constraints change.
+          Build a practical planting layout for management, then hand off a clear
+          AI work schedule that staff can execute immediately.
         </p>
 
         <div className="cta-row">
-          <button type="button" className="btn btn-primary" onClick={onStartDemo}>
+          <button type="button" className="btn btn-primary" onClick={onOpenEmployer}>
             <Sprout size={20} />
-            Start Demo
+            For Employer
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onOpenEmployee}>
+            <Grid3X3 size={18} />
+            For Employee
           </button>
         </div>
 
