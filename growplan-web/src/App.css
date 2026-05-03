@@ -2425,6 +2425,9 @@
 }
 
 .dashboard-kpis .risk-kpi p {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #a14c04;
   font-weight: 700;
 }
@@ -2432,6 +2435,57 @@
 .dashboard-kpis .risk-kpi strong {
   color: #1f2e3d;
   font-size: 1.45rem;
+}
+
+.dashboard-kpis .replan-trigger.waiting {
+  border-color: #d7e1d9;
+  background: #f7faf8;
+}
+
+.dashboard-kpis .replan-trigger.ready {
+  animation: riskBlink 1s ease-in-out infinite;
+}
+
+.dashboard-kpis .replan-trigger.waiting p {
+  color: #5e7283;
+}
+
+.dashboard-kpis .replan-trigger.waiting strong {
+  color: #5d7080;
+  font-size: 1.1rem;
+}
+
+.dashboard-kpis .replan-trigger:disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.risk-alarm-icon {
+  color: #cc6d0f;
+  animation: alarmBlink 0.9s ease-in-out infinite;
+}
+
+@keyframes riskBlink {
+  0%,
+  100% {
+    border-color: #e9d0b2;
+    box-shadow: 0 0 0 rgba(190, 109, 22, 0);
+  }
+  50% {
+    border-color: #d88c32;
+    box-shadow: 0 0 0 3px rgba(190, 109, 22, 0.18);
+  }
+}
+
+@keyframes alarmBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 
 .dashboard-content {

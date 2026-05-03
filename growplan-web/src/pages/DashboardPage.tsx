@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   AlertTriangle,
   Bell,
+  BellRing,
   Bot,
   CalendarDays,
   Check,
@@ -89,7 +90,9 @@ export function DashboardPage({
     },
   ])
   const [isCopilotThinking, setIsCopilotThinking] = useState(false)
+  const [isRiskReady, setIsRiskReady] = useState(false)
   const thinkingTimerRef = useRef<number | null>(null)
+  const riskTimerRef = useRef<number | null>(null)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
 
@@ -102,8 +105,19 @@ export function DashboardPage({
       if (thinkingTimerRef.current !== null) {
         window.clearTimeout(thinkingTimerRef.current)
       }
+      if (riskTimerRef.current !== null) {
+        window.clearTimeout(riskTimerRef.current)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    setIsRiskReady(false)
+    riskTimerRef.current = window.setTimeout(() => {
+      setIsRiskReady(true)
+      riskTimerRef.current = null
+    }, 5000)
+  }, [farm.farmName, goalData, selectedCropIds])
 
   const accountInitials =
     farm.farmName
@@ -187,8 +201,8 @@ export function DashboardPage({
       }
     } else if (question.includes('100%')) {
       response = `The plan targets 100% utilization to maximize your space. Every available grid in your ${farm.rows}x${farm.columns} setup is assigned a crop based on your goal.`
-    } else if (question.toLowerCase().includes('risk')) {
-      response = `The primary risks are: 1) A detected 5-day delay in ${primaryCropName} growth, and 2) Nursery load reaching ${peakNurseryLoad.activeSeedlings} seedlings (${peakNurseryLoad.utilizationPercent}%) in Week ${peakNurseryLoad.week}.`
+    } else if (question.toLowerCase().includes('risk') || question.toLowerCase().includes('disease')) {
+      response = `The primary risks are: 1) Suspected leaf disease in ${primaryCropName} Zone B affecting 8 trays, and 2) Nursery load reaching ${peakNurseryLoad.activeSeedlings} seedlings (${peakNurseryLoad.utilizationPercent}%) in Week ${peakNurseryLoad.week}. Recommended action is isolate Zone B and re-sequence transplant tasks.`
     } else if (question.includes('seed next week')) {
       response = `In Week ${nextSeedWeek}, you should seed ${nextSeedBatch} seedlings. This ensures they are ready for transplanting after the ${farm.seedlingLeadDays}-day lead time.`
     }
@@ -273,9 +287,19 @@ export function DashboardPage({
             </p>
             <span>{Math.max(78, Math.min(97, resolvedPlan.utilizationPercent - 3))}% target progress</span>
           </article>
-          <button type="button" className="risk-kpi replan-trigger" onClick={onOpenReplan}>
-            <p>Risk: {primaryCropName.toLowerCase()} delay +5 days</p>
-            <strong>Re-plan suggested</strong>
+          <button
+            type="button"
+            className={`risk-kpi replan-trigger ${isRiskReady ? 'ready' : 'waiting'}`}
+            onClick={onOpenReplan}
+            disabled={!isRiskReady}
+          >
+            <p>
+              {isRiskReady ? <BellRing size={14} className="risk-alarm-icon" /> : <LoaderCircle size={14} className="spin" />}
+              {isRiskReady
+                ? `Risk: suspected disease in ${primaryCropName.toLowerCase()} Zone B`
+                : 'Monitoring crop health signals...'}
+            </p>
+            <strong>{isRiskReady ? 'Containment re-plan suggested' : 'Waiting for incident signal'}</strong>
           </button>
         </section>
 
@@ -477,7 +501,7 @@ export function DashboardPage({
               >
                 Why is {secondaryCropName} placed here?
               </button>
-              <button type="button" disabled={isCopilotThinking} onClick={() => handleAsk('What are the current risks?')}>
+              <button type="button" disabled={isCopilotThinking} onClick={() => handleAsk('What are the current disease risks?')}>
                 Explain risk
               </button>
               <button

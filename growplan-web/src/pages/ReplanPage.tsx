@@ -153,8 +153,8 @@ export function ReplanPage({
   const analysisBlueprint = useMemo(
     () => [
       { label: 'Locking confirmed farm grid', icon: LayoutGrid },
-      { label: `Reading incident: ${primaryCropName} delay +5 days`, icon: AlertTriangle },
-      { label: `Shifting ${primaryCropName} grow and harvest window`, icon: Sprout },
+      { label: `Reading incident: suspected disease in ${primaryCropName} Zone B`, icon: AlertTriangle },
+      { label: `Isolating ${primaryCropName} affected zone and updating task order`, icon: Sprout },
       { label: 'Rebalancing nursery queue', icon: Waves },
       { label: 'Preparing operator-facing explanation', icon: CalendarDays },
     ],
@@ -193,7 +193,7 @@ export function ReplanPage({
 
   const replanSteps = useMemo(() => [
     { id: 1, title: 'Confirmed Plan', subtitle: 'Use the locked dashboard plan' },
-    { id: 2, title: 'Incident', subtitle: `${primaryCropName} delay detected` },
+    { id: 2, title: 'Incident', subtitle: `${primaryCropName} disease alert detected` },
     { id: 3, title: 'Re-plan', subtitle: 'Update schedule and nursery load' },
     { id: 4, title: 'Apply', subtitle: 'Send suggestion back to dashboard' },
   ], [primaryCropName])
@@ -265,7 +265,7 @@ export function ReplanPage({
               </span>
               <div>
                 <p>Risk scenario</p>
-                <strong>{primaryCropName} delay +5 days</strong>
+                <strong>Suspected disease in {primaryCropName} Zone B</strong>
               </div>
             </div>
 
@@ -275,8 +275,8 @@ export function ReplanPage({
               </div>
               <h2>Building a safer schedule</h2>
               <p>
-                The grid stays locked while AgriMatrix shifts the {primaryCropName} window and recalculates
-                nursery load.
+                The grid stays locked while AgriMatrix isolates the affected zone, protects adjacent crops,
+                and recalculates nursery load.
               </p>
 
               <div className="analysis-list">
@@ -311,8 +311,9 @@ export function ReplanPage({
             <div className="replan-explain-card">
               <h2>Suggested trade-off</h2>
               <p>
-                {primaryCropName} moves one week later, {secondaryCropName} reserve stays protected, and the original layout is maintained. 
-                Revenue dips slightly, but the operator gets a clearer transplant queue.
+                The affected {primaryCropName} rows are temporarily isolated, {secondaryCropName} reserve stays
+                protected, and transplant tasks are re-sequenced to reduce spread risk.
+                Yield may dip slightly, but containment and recovery are faster.
               </p>
             </div>
 
@@ -332,7 +333,7 @@ export function ReplanPage({
           <aside className={`generate-preview-card ${allAnalysisDone ? '' : 'processing'}`}>
             <header>
               <h2>Updated Plan Preview</h2>
-              <p>{allAnalysisDone ? `${primaryCropName} delay scenario applied` : 'Processing...'}</p>
+              <p>{allAnalysisDone ? `${primaryCropName} disease containment scenario applied` : 'Processing...'}</p>
             </header>
 
             <div className="generate-legend">
@@ -445,7 +446,7 @@ export function ReplanPage({
 
             <div className="generate-note warn">
               <AlertTriangle size={16} />
-              {primaryCropName} phases shift one week later to reflect the delay.
+              {primaryCropName} Zone B is isolated and task sequencing is adjusted for containment.
             </div>
 
             <div className="generate-note">
