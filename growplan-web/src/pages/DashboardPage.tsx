@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   AlertTriangle,
   Bell,
@@ -48,6 +48,11 @@ const flowItems = [
   'Harvest',
 ]
 
+type ChatMessage = {
+  role: 'user' | 'bot'
+  text: string
+}
+
 export function DashboardPage({
   farm,
   selectedCropIds,
@@ -71,6 +76,19 @@ export function DashboardPage({
       }),
     [farm, generatedPlan, goalData, selectedCropIds],
   )
+
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+    {
+      role: 'bot',
+      text: 'Hello! I am your AgriMatrix Copilot. How can I help with your plan today?',
+    },
+  ])
+
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatHistory])
 
   const accountInitials =
     farm.farmName
@@ -136,6 +154,26 @@ export function DashboardPage({
     )
   }, [farm.nurseryCapacity, resolvedPlan.nurseryLoad])
   const nurseryLoadWeeks = useMemo(() => resolvedPlan.nurseryLoad.slice(0, 8), [resolvedPlan.nurseryLoad])
+
+  const handleAsk = (question: string) => {
+    let response = "I'm analyzing the data..."
+
+    if (question.includes('Mint')) {
+      response = 'Mint is placed at the edge because it has a spreading growth habit. Keeping it isolated prevents it from competing with more compact crops like Lettuce.'
+    } else if (question.includes('100%')) {
+      response = `The plan targets 100% utilization to maximize your space. Every available grid in your ${farm.rows}x${farm.columns} setup is assigned a crop based on your goal.`
+    } else if (question.toLowerCase().includes('risk')) {
+      response = `The primary risks are: 1) A detected 5-day delay in Lettuce growth, and 2) Nursery load reaching ${peakNurseryLoad.activeSeedlings} seedlings (${peakNurseryLoad.utilizationPercent}%) in Week ${peakNurseryLoad.week}.`
+    } else if (question.includes('seed next week')) {
+      response = `In Week ${nextSeedWeek}, you should seed ${nextSeedBatch} seedlings. This ensures they are ready for transplanting after the ${farm.seedlingLeadDays}-day lead time.`
+    }
+
+    setChatHistory(prev => [
+      ...prev,
+      { role: 'user', text: question },
+      { role: 'bot', text: response }
+    ])
+  }
 
   return (
     <main className="dashboard-shell">
@@ -376,24 +414,34 @@ export function DashboardPage({
               </span>
             </section>
 
-            <div className="chat-bubble user">
-              What should I seed next week?
-            </div>
-            <div className="chat-bubble bot">
-              Seed {nextSeedBatch} seedlings in Week {nextSeedWeek} so the nursery queue is ready
-              for the next transplant cycle. Peak nursery load stays at {peakNurseryLoad.activeSeedlings}
-              {' '}seedlings in Week {peakNurseryLoad.week}.
+            <div className="copilot-chat-history">
+              {chatHistory.map((msg, idx) => (
+                <div key={idx} className={`chat-bubble ${msg.role}`}>
+                  {msg.text}
+                </div>
+              ))}
+              <div ref={chatEndRef} />
             </div>
 
             <div className="copilot-actions">
-              <button type="button">Explain nursery risk</button>
-              <button type="button">Show safer batching</button>
+              <button type="button" onClick={() => handleAsk('Why is Mint placed at the edge?')}>
+                Why is Mint at the edge?
+              </button>
+              <button type="button" onClick={() => handleAsk('What are the current risks?')}>
+                Explain risk
+              </button>
+              <button type="button" onClick={() => handleAsk('Why is this plan 100% utilized?')}>
+                Why 100% utilized?
+              </button>
+              <button type="button" onClick={() => handleAsk('What should I seed next week?')}>
+                What to seed?
+              </button>
             </div>
 
-            <label className="copilot-input">
-              <input placeholder="Ask AgriMatrix..." />
+            <div className="copilot-input-visual">
+              <p>Select a prompt above to interact</p>
               <Send size={16} />
-            </label>
+            </div>
 
             <button type="button" className="back-confirm-btn" onClick={onBackToConfirm}>
               <MessageSquare size={16} />
