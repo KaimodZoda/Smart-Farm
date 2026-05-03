@@ -211,8 +211,6 @@ export function DefineGoalPage({
             </header>
 
             <section className="goal-section">
-              <h2>Production Targets</h2>
-
               <div className="crop-goal-list">
                 {selectedCrops.map((crop) => {
                   const config = cropGoals[crop.id]
@@ -222,53 +220,55 @@ export function DefineGoalPage({
 
                   return (
                     <article key={crop.id} className="crop-goal-item">
-                      <div className="crop-goal-head">
-                        <div className="selected-thumb" style={{ backgroundColor: crop.accent }}>
-                          {crop.name.slice(0, 2).toUpperCase()}
+                      <div className="crop-goal-main">
+                        <div className="crop-goal-head">
+                          <div className="selected-thumb" style={{ backgroundColor: crop.accent }}>
+                            {crop.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p>{crop.name}</p>
+                            <small>{crop.category}</small>
+                          </div>
                         </div>
-                        <div>
-                          <p>{crop.name}</p>
-                          <small>{crop.category}</small>
-                        </div>
-                      </div>
 
-                      <div className="goal-input-row">
-                        <label>
-                          <span className="goal-slider-head">
-                            Goal / week
-                            <strong>{config.targetPerWeek} kg</strong>
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={maxTarget}
-                            step={1}
-                            value={config.targetPerWeek}
-                            onChange={(event) => updateTarget(crop.id, Number(event.target.value))}
-                          />
-                          <span className="goal-slider-scale">
-                            <small>0 kg</small>
-                            <small>Available {remainingMaxTarget} kg/week</small>
-                          </span>
-                        </label>
-                        <label>
-                          <span className="goal-slider-head">
-                            Reserve
-                            <strong>{config.reservePercent}%</strong>
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={50}
-                            step={1}
-                            value={config.reservePercent}
-                            onChange={(event) => updateReserve(crop.id, Number(event.target.value))}
-                          />
-                          <span className="goal-slider-scale">
-                            <small>0%</small>
-                            <small>Available up to {maxReserve}%</small>
-                          </span>
-                        </label>
+                        <div className="goal-input-row">
+                          <label>
+                            <span className="goal-slider-head">
+                              Goal / week
+                              <strong>{config.targetPerWeek} kg</strong>
+                            </span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={maxTarget}
+                              step={1}
+                              value={config.targetPerWeek}
+                              onChange={(event) => updateTarget(crop.id, Number(event.target.value))}
+                            />
+                            <span className="goal-slider-scale">
+                              <small>0 kg</small>
+                              <small>Available {remainingMaxTarget} kg/week</small>
+                            </span>
+                          </label>
+                          <label>
+                            <span className="goal-slider-head">
+                              Reserve
+                              <strong>{config.reservePercent}%</strong>
+                            </span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={config.reservePercent}
+                              onChange={(event) => updateReserve(crop.id, Number(event.target.value))}
+                            />
+                            <span className="goal-slider-scale">
+                              <small>0%</small>
+                              <small>Available up to {maxReserve}%</small>
+                            </span>
+                          </label>
+                        </div>
                       </div>
 
                       <div className="goal-derived-row">
@@ -284,42 +284,44 @@ export function DefineGoalPage({
               </div>
             </section>
 
-            <section className="goal-section">
-              <h2>Planning horizon</h2>
-              <label className="horizon-field">
-                <CalendarDays size={18} />
-                <select value={planningHorizon} onChange={(event) => setPlanningHorizon(event.target.value)}>
-                  {planningOptions.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} />
-              </label>
-              <small>AI will plan production across this time period.</small>
-            </section>
+            <div className="goal-meta-grid">
+              <section className="goal-meta-card">
+                <h2>Planning horizon</h2>
+                <label className="horizon-field">
+                  <CalendarDays size={18} />
+                  <select value={planningHorizon} onChange={(event) => setPlanningHorizon(event.target.value)}>
+                    {planningOptions.map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} />
+                </label>
+                <small>AI will plan production across this time period.</small>
+              </section>
 
-            <section className="goal-section">
-              <h2>Optimization priority</h2>
-              <div className="priority-switch">
-                <button
-                  type="button"
-                  className={`priority-btn ${priority === 'maximize-space' ? 'active' : ''}`}
-                  onClick={() => setPriority('maximize-space')}
-                >
-                  <Goal size={16} />
-                  Maximize space utilization
-                </button>
-                <button
-                  type="button"
-                  className={`priority-btn ${priority === 'minimize-stockout' ? 'active' : ''}`}
-                  onClick={() => setPriority('minimize-stockout')}
-                >
-                  <ShieldCheck size={16} />
-                  Minimize stockout risk
-                </button>
-              </div>
-              <small>Choose the primary objective for plan optimization.</small>
-            </section>
+              <section className="goal-meta-card">
+                <h2>Optimization priority</h2>
+                <div className="priority-switch">
+                  <button
+                    type="button"
+                    className={`priority-btn ${priority === 'maximize-space' ? 'active' : ''}`}
+                    onClick={() => setPriority('maximize-space')}
+                  >
+                    <Goal size={16} />
+                    Maximize space utilization
+                  </button>
+                  <button
+                    type="button"
+                    className={`priority-btn ${priority === 'minimize-stockout' ? 'active' : ''}`}
+                    onClick={() => setPriority('minimize-stockout')}
+                  >
+                    <ShieldCheck size={16} />
+                    Minimize stockout risk
+                  </button>
+                </div>
+                <small>Choose the primary objective for plan optimization.</small>
+              </section>
+            </div>
 
             <StepActions onBack={onBackToSelectCrops} onNext={handleContinue} nextLabel="Generate Plan" />
           </section>

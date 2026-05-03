@@ -170,40 +170,40 @@ export function ConfirmPlanPage({
                   <Info size={14} />
                   Plan accounts for crop rotation, resource availability, and market demand.
                 </p>
-              </section>
 
-              <section className="confirm-timeline-card">
-                <header>
-                  <h2>Nursery Queue</h2>
-                  <CalendarDays size={16} />
-                </header>
-                <div className="confirm-timeline-table nursery-load-table">
-                  <div className="timeline-head nursery-load-head">
-                    <span>Week</span>
-                    {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
-                      <b key={item.week}>W{item.week}</b>
-                    ))}
-                  </div>
-                  <div className="timeline-row-confirm nursery-load-row-confirm">
-                    <span>Load</span>
-                    <div className="timeline-track-confirm nursery-track-confirm">
+                <div className="confirm-nursery-queue">
+                  <header>
+                    <h2>Nursery Queue</h2>
+                    <CalendarDays size={16} />
+                  </header>
+                  <div className="confirm-timeline-table nursery-load-table">
+                    <div className="timeline-head nursery-load-head">
+                      <span>Week</span>
                       {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
-                        <i
-                          key={item.week}
-                          className={`risk-${item.risk.toLowerCase()}`}
-                          style={{ gridColumn: `${item.week} / span 1` }}
-                        >
-                          {item.activeSeedlings}
-                        </i>
+                        <b key={item.week}>W{item.week}</b>
                       ))}
                     </div>
+                    <div className="timeline-row-confirm nursery-load-row-confirm">
+                      <span>Load</span>
+                      <div className="timeline-track-confirm nursery-track-confirm">
+                        {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                          <i
+                            key={item.week}
+                            className={`risk-${item.risk.toLowerCase()}`}
+                            style={{ gridColumn: `${item.week} / span 1` }}
+                          >
+                            {item.activeSeedlings}
+                          </i>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                  <p>
+                    <Info size={14} />
+                    Nursery capacity is {farm.nurseryCapacity} seedlings with a lead time of{' '}
+                    {farm.seedlingLeadDays} days.
+                  </p>
                 </div>
-                <p>
-                  <Info size={14} />
-                  Nursery capacity is {farm.nurseryCapacity} seedlings with a lead time of{' '}
-                  {farm.seedlingLeadDays} days.
-                </p>
               </section>
             </div>
           </section>
