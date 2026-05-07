@@ -3,11 +3,12 @@ import { Bell, HelpCircle, Leaf } from 'lucide-react'
 type AppHeaderProps = {
   accountName: string
   accountInitials: string
+  variant?: 'full' | 'edge'
 }
 
-export function AppHeader({ accountName, accountInitials }: AppHeaderProps) {
+export function AppHeader({ accountName, accountInitials, variant = 'full' }: AppHeaderProps) {
   return (
-    <header className="setup-topbar">
+    <header className={`app-header app-header--${variant}`}>
       <div className="setup-brand">
         <div className="setup-brand-mark" aria-hidden="true">
           <Leaf size={22} strokeWidth={2.3} />
@@ -24,7 +25,7 @@ export function AppHeader({ accountName, accountInitials }: AppHeaderProps) {
         </button>
         <div className="account-chip">
           <span className="avatar">{accountInitials}</span>
-          <span>{accountName}</span>
+          <span className="account-name">{accountName}</span>
         </div>
       </div>
     </header>

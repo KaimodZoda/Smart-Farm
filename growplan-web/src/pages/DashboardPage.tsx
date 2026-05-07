@@ -6,7 +6,6 @@ import {
   Bot,
   CalendarDays,
   Check,
-  ChevronDown,
   Droplets,
   Grid3X3,
   Leaf,
@@ -19,6 +18,7 @@ import {
   Thermometer,
   Waves,
 } from 'lucide-react'
+import { AppHeader } from '../components/AppHeader'
 import { cropLibrary, type CropId } from '../constants/crops'
 import { generatePlanData } from '../lib/planGenerator'
 import type { GeneratedPlanData, GoalData, SetupFarmData } from '../types/planning'
@@ -242,26 +242,7 @@ export function DashboardPage({
       </aside>
 
       <section className="dashboard-main">
-        <header className="dashboard-topbar">
-          <div className="dashboard-title">
-            <span className="dashboard-topbar-logo" aria-hidden="true">
-              <Leaf size={18} />
-            </span>
-            <h1>AgriMatrix</h1>
-          </div>
-          <div className="dashboard-top-actions">
-            <button type="button" className="icon-btn" aria-label="Notifications">
-              <Bell size={16} />
-            </button>
-            <button type="button" className="farm-selector">
-              {farm.farmName}
-              <ChevronDown size={15} />
-            </button>
-            <button type="button" className="dashboard-user">
-              <span>{accountInitials}</span>
-            </button>
-          </div>
-        </header>
+        <AppHeader accountName={farm.farmName} accountInitials={accountInitials} variant="edge" />
 
         <section className="dashboard-kpis">
           <article>

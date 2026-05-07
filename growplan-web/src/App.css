@@ -358,13 +358,23 @@
   background: #f4f8f6;
 }
 
-.setup-topbar {
+.app-header {
   background: #ffffff;
   border-bottom: 1px solid #d8e4dc;
-  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-sizing: border-box;
+}
+
+.app-header--full {
+  padding: 14px 20px;
+  height: 72px;
+}
+
+.app-header--edge {
+  padding: 10px 14px;
+  height: 72px;
 }
 
 .setup-brand {
@@ -390,6 +400,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .icon-btn {
@@ -407,11 +418,22 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 12px;
+  height: 40px;
+  padding: 0 12px;
   border: 1px solid #d8e4dc;
   border-radius: 999px;
   background: #ffffff;
   font-weight: 600;
+  white-space: nowrap;
+  max-width: 320px;
+  min-width: 0;
+}
+
+.account-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .avatar {
@@ -2337,19 +2359,9 @@
 }
 
 .dashboard-main {
-  padding: 0 14px 14px;
+  padding: 0;
   display: grid;
   gap: 10px;
-}
-
-.dashboard-topbar {
-  margin: 0 -14px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #d7e2db;
-  background: #ffffff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .dashboard-title h1 {
@@ -2362,17 +2374,6 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-}
-
-.dashboard-topbar-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #d7e3db;
-  display: inline-grid;
-  place-items: center;
-  background: #f7fcf9;
-  color: #0f7f45;
 }
 
 .dashboard-top-actions {
@@ -2394,29 +2395,8 @@
   font-weight: 600;
 }
 
-.dashboard-user {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #d2ded6;
-  background: #ffffff;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-}
-
-.dashboard-user span {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: #dbf1e4;
-  color: #0f8d4b;
-  display: grid;
-  place-items: center;
-  font-size: 0.76rem;
-  font-weight: 800;
-}
-
 .dashboard-kpis {
+  padding: 0 14px;
   margin-top: 2px;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2549,6 +2529,7 @@
 }
 
 .dashboard-content {
+  padding: 0 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
   gap: 8px;
@@ -2909,6 +2890,7 @@
 }
 
 .dashboard-flow-strip {
+  margin: 0 14px;
   border: 1px solid #d5e1d9;
   border-radius: 8px;
   background: #ffffff;
@@ -3453,8 +3435,19 @@
     width: 100%;
   }
 
-  .setup-topbar {
+  .app-header {
+    height: 64px;
+  }
+
+  .app-header--full {
     padding: 12px;
+  }
+
+  .app-header--edge {
+    padding: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .setup-brand {
@@ -3560,14 +3553,8 @@
     flex-direction: column;
   }
 
-  .dashboard-topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
   .dashboard-main {
-    padding: 0 10px 10px;
+    padding: 0;
   }
 
   .schedule-page-head,
@@ -3575,11 +3562,6 @@
   .schedule-layout {
     padding-left: 10px;
     padding-right: 10px;
-  }
-
-  .dashboard-topbar {
-    margin: 0 -10px;
-    padding: 10px;
   }
 
   .dashboard-flow-strip {

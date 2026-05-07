@@ -222,9 +222,6 @@ export function WorkSchedulePage({
   return (
     <main className="dashboard-shell work-schedule-shell">
       <aside className="dashboard-side">
-        <div className="dashboard-logo-box">
-          <Leaf size={20} />
-        </div>
         <nav className="dashboard-nav">
           {mode === 'employer' ? (
             <>
@@ -269,9 +266,9 @@ export function WorkSchedulePage({
       </aside>
 
       <section className="dashboard-main work-schedule-main">
-        <AppHeader accountName={accountName} accountInitials={accountInitials} />
+        <AppHeader accountName={accountName} accountInitials={accountInitials} variant="edge" />
 
-        <header className="schedule-page-head">
+        <section className="schedule-page-head">
           <div className="dashboard-title">
             <h1>AI Work Schedule</h1>
           </div>
@@ -284,7 +281,7 @@ export function WorkSchedulePage({
               <CalendarDays size={15} />
             </button>
           </div>
-        </header>
+        </section>
 
         <section className="dashboard-kpis schedule-kpis">
           <article>
