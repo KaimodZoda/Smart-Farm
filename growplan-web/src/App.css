@@ -2358,6 +2358,23 @@
   line-height: 1;
 }
 
+.dashboard-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-topbar-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #d7e3db;
+  display: inline-grid;
+  place-items: center;
+  background: #f7fcf9;
+  color: #0f7f45;
+}
+
 .dashboard-top-actions {
   display: inline-flex;
   align-items: center;

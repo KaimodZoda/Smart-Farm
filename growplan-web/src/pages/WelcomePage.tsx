@@ -1,4 +1,5 @@
 import { Cpu, Grid3X3, Leaf, ShieldCheck, Sparkles, Sprout } from 'lucide-react'
+import dashboardPreviewImage from '../assets/dashboard.png'
 
 type WelcomePageProps = {
   onOpenEmployer: () => void
@@ -176,7 +177,7 @@ export function WelcomePage({ onOpenEmployer, onOpenEmployee }: WelcomePageProps
         <div className="ai-preview">
           <p>AI plan preview</p>
           <img
-            src="/growplan-web/src/assets/dashboard.png"
+            src={dashboardPreviewImage}
             alt="AgriMatrix dashboard mockup showing grid, timeline, and AI copilot explanation"
           />
         </div>

@@ -223,10 +223,6 @@ export function DashboardPage({
   return (
     <main className="dashboard-shell">
       <aside className="dashboard-side">
-        <div className="dashboard-logo-box">
-          <Leaf size={20} />
-        </div>
-
         <nav className="dashboard-nav">
           {sideItems.map((item) => {
             const Icon = item.icon
@@ -248,6 +244,9 @@ export function DashboardPage({
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div className="dashboard-title">
+            <span className="dashboard-topbar-logo" aria-hidden="true">
+              <Leaf size={18} />
+            </span>
             <h1>AgriMatrix</h1>
           </div>
           <div className="dashboard-top-actions">
