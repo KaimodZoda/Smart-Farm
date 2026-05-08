@@ -416,33 +416,40 @@ export function SetupFarmPage({ initialData, onBackToWelcome, onContinue }: Setu
 
             <div
               className="farm-grid-preview"
-              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
               onPointerUp={finalizeDrag}
             >
-              {Array.from({ length: totalGrids }, (_, idx) => (
-                <span
-                  key={idx}
-                  className={`grid-cell zone-${lightingAssignments[idx] ?? 1} iz-${irrigationAssignments[idx] ?? 1} ${isCellInDragRect(idx) ? 'drag-preview' : ''}`}
-                  onPointerDown={() => handleCellPointerDown(idx)}
-                  onPointerEnter={() => handleCellPointerEnter(idx)}
-                >
-                  <b className={`irrigation-cell-tag iz-${irrigationAssignments[idx] ?? 1}`}>
-                    IZ {irrigationAssignments[idx] ?? 1}
-                  </b>
-                </span>
-              ))}
+              <div
+                className="farm-grid-canvas"
+                style={{
+                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+                }}
+              >
+                {Array.from({ length: totalGrids }, (_, idx) => (
+                  <span
+                    key={idx}
+                    className={`grid-cell zone-${lightingAssignments[idx] ?? 1} iz-${irrigationAssignments[idx] ?? 1} ${isCellInDragRect(idx) ? 'drag-preview' : ''}`}
+                    onPointerDown={() => handleCellPointerDown(idx)}
+                    onPointerEnter={() => handleCellPointerEnter(idx)}
+                  >
+                    <b className={`irrigation-cell-tag iz-${irrigationAssignments[idx] ?? 1}`}>
+                      IZ {irrigationAssignments[idx] ?? 1}
+                    </b>
+                  </span>
+                ))}
 
-              {dragRect ? (
-                <span
-                  className={`drag-rect ${activeTool}`}
-                  style={{
-                    top: `${(dragRect.minRow / rows) * 100}%`,
-                    left: `${(dragRect.minCol / columns) * 100}%`,
-                    width: `${((dragRect.maxCol - dragRect.minCol + 1) / columns) * 100}%`,
-                    height: `${((dragRect.maxRow - dragRect.minRow + 1) / rows) * 100}%`,
-                  }}
-                ></span>
-              ) : null}
+                {dragRect ? (
+                  <span
+                    className={`drag-rect ${activeTool}`}
+                    style={{
+                      top: `${(dragRect.minRow / rows) * 100}%`,
+                      left: `${(dragRect.minCol / columns) * 100}%`,
+                      width: `${((dragRect.maxCol - dragRect.minCol + 1) / columns) * 100}%`,
+                      height: `${((dragRect.maxRow - dragRect.minRow + 1) / rows) * 100}%`,
+                    }}
+                  ></span>
+                ) : null}
+              </div>
             </div>
 
             <footer className="preview-footer">
