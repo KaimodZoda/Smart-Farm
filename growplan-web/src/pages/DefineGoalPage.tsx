@@ -91,10 +91,25 @@ export function DefineGoalPage({
     0,
     capacityState.availableCapacityPerWeek - capacityState.requiredGridPerWeek,
   )
+  const hasAnyIncreaseCapacityStep = useMemo(() => {
+    if (capacityState.exceeded || capacityGap <= 0 || selectedCrops.length === 0) return false
+    const epsilon = 1e-6
+
+    return selectedCrops.some((crop) => {
+      const target = cropGoals[crop.id]?.targetPerWeek ?? 0
+      const reserve = cropGoals[crop.id]?.reservePercent ?? 0
+      const targetStepGrid = (GOAL_DECIMAL_STEP * (1 + reserve / 100)) / crop.yieldPerGrid
+      const reserveStepGrid = target > 0 ? (target * 0.01) / crop.yieldPerGrid : Number.POSITIVE_INFINITY
+
+      const canIncreaseTarget = targetStepGrid <= capacityGap + epsilon
+      const canIncreaseReserve = reserve < 50 && reserveStepGrid <= capacityGap + epsilon
+      return canIncreaseTarget || canIncreaseReserve
+    })
+  }, [capacityGap, capacityState.exceeded, cropGoals, selectedCrops])
   const isCapacityFull =
     !capacityState.exceeded &&
     capacityState.availableCapacityPerWeek > 0 &&
-    capacityGap <= 0.05
+    (capacityGap <= 0.05 || !hasAnyIncreaseCapacityStep)
   const capacityUsageDisplayPercent = isCapacityFull
     ? 100
     : Math.min(99.9, Math.floor(capacityUsageRawPercent * 10) / 10)
