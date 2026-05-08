@@ -99,6 +99,16 @@
   box-shadow: none;
 }
 
+.btn.is-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn.is-disabled:hover {
+  transform: none;
+}
+
 .btn-primary {
   background: var(--brand);
   color: #ffffff;
@@ -107,6 +117,11 @@
 
 .btn-primary:hover {
   background: var(--brand-strong);
+}
+
+.btn-primary.is-disabled,
+.btn-primary.is-disabled:hover {
+  background: var(--brand);
 }
 
 .btn-secondary {
@@ -860,6 +875,16 @@
   gap: 10px;
 }
 
+.step-next-hint {
+  margin: 0 2px 0 auto;
+  align-self: center;
+  color: #9d5c0d;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: right;
+}
+
 .legend-row {
   display: flex;
   flex-wrap: wrap;
@@ -1261,6 +1286,138 @@
 .goal-input-row input[type='range'] {
   width: min(260px, 100%);
   accent-color: #108749;
+}
+
+.goal-input-row .goal-range-target {
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      to right,
+      #108749 0%,
+      #108749 var(--target-fill-current, 0%),
+      #a9dfbf var(--target-fill-current, 0%),
+      #a9dfbf var(--target-fill-remaining-visual, var(--target-fill-remaining, 0%)),
+      #e5ece8 var(--target-fill-remaining-visual, var(--target-fill-remaining, 0%)),
+      #e5ece8 100%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgba(23, 103, 56, 0.12) 0 3px,
+      rgba(23, 103, 56, 0.28) 3px 6px
+    );
+  background-repeat: no-repeat, no-repeat;
+  background-size:
+    100% 100%,
+    calc(var(--target-fill-remaining-visual, var(--target-fill-remaining, 0%)) - var(--target-fill-current, 0%)) 100%;
+  background-position:
+    0 0,
+    var(--target-fill-current, 0%) 0;
+}
+
+.goal-input-row .goal-range-target::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-target::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid #0f7f45;
+  background: rgba(255, 255, 255, 0.78);
+  margin-top: -3px;
+  box-shadow: 0 1px 1px rgba(12, 38, 25, 0.2);
+}
+
+.goal-input-row .goal-range-target::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-target::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-target::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid #0f7f45;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 1px 1px rgba(12, 38, 25, 0.2);
+}
+
+.goal-input-row .goal-range-reserve {
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      to right,
+      #1a7f57 0%,
+      #1a7f57 var(--reserve-fill-current, 0%),
+      #b9e4d1 var(--reserve-fill-current, 0%),
+      #b9e4d1 var(--reserve-fill-remaining-visual, var(--reserve-fill-remaining, 0%)),
+      #e5ece8 var(--reserve-fill-remaining-visual, var(--reserve-fill-remaining, 0%)),
+      #e5ece8 100%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgba(21, 88, 61, 0.12) 0 3px,
+      rgba(21, 88, 61, 0.28) 3px 6px
+    );
+  background-repeat: no-repeat, no-repeat;
+  background-size:
+    100% 100%,
+    calc(var(--reserve-fill-remaining-visual, var(--reserve-fill-remaining, 0%)) - var(--reserve-fill-current, 0%)) 100%;
+  background-position:
+    0 0,
+    var(--reserve-fill-current, 0%) 0;
+}
+
+.goal-input-row .goal-range-reserve::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-reserve::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid #0f7f45;
+  background: rgba(255, 255, 255, 0.78);
+  margin-top: -3px;
+  box-shadow: 0 1px 1px rgba(12, 38, 25, 0.2);
+}
+
+.goal-input-row .goal-range-reserve::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-reserve::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.goal-input-row .goal-range-reserve::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid #0f7f45;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 1px 1px rgba(12, 38, 25, 0.2);
 }
 
 .goal-slider-head {

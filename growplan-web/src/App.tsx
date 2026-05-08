@@ -25,6 +25,8 @@ type Page =
   | 'work-schedule-employer'
   | 'work-schedule-employee'
 
+const BALANCED_RESERVE_PERCENT = 10
+
 const createInitialSetupFarmData = (): SetupFarmData => ({
   farmName: 'GreenRise Farm',
   farmLocation: 'Bangkok',
@@ -39,32 +41,51 @@ const createInitialSetupFarmData = (): SetupFarmData => ({
   irrigationAssignments: [],
 })
 
-const createInitialCropGoals = (): CropGoalsById => {
+const createBalancedCropGoals = (
+  farm: SetupFarmData,
+  selectedCropIds: CropId[],
+): CropGoalsById => {
+  const selectedCropSet = new Set(selectedCropIds)
+  const selectedCrops = cropLibrary.filter((crop) => selectedCropSet.has(crop.id))
+  const availableCapacityPerWeek = farm.rows * farm.columns
+  const gridSharePerCrop =
+    selectedCrops.length > 0 ? availableCapacityPerWeek / selectedCrops.length : 0
+  const balancedReservePercent = selectedCrops.length > 0 ? BALANCED_RESERVE_PERCENT : 0
+  const reserveFactor = 1 + balancedReservePercent / 100
+
   return cropLibrary.reduce(
     (acc, crop) => ({
       ...acc,
       [crop.id]: {
-        targetPerWeek: 0,
-        reservePercent: crop.defaultReservePercent,
+        reservePercent: selectedCropSet.has(crop.id) ? balancedReservePercent : 0,
+        targetPerWeek: selectedCropSet.has(crop.id)
+          ? Math.max(0, Math.floor(((gridSharePerCrop * crop.yieldPerGrid) / reserveFactor) * 10) / 10)
+          : 0,
       },
     }),
     {} as CropGoalsById,
   )
 }
 
-const createInitialGoalData = (): GoalData => ({
+const createInitialGoalData = (
+  farm: SetupFarmData,
+  selectedCropIds: CropId[],
+): GoalData => ({
   planningHorizon: '8 weeks',
   priority: 'maximize-space',
-  cropGoals: createInitialCropGoals(),
+  cropGoals: createBalancedCropGoals(farm, selectedCropIds),
 })
 
 function App() {
+  const initialSetupFarmData = createInitialSetupFarmData()
+  const initialSelectedCropIds = cropLibrary.map((crop) => crop.id)
+
   const [page, setPage] = useState<Page>('welcome')
-  const [setupFarmData, setSetupFarmData] = useState<SetupFarmData>(createInitialSetupFarmData)
-  const [selectedCropIds, setSelectedCropIds] = useState<CropId[]>(
-    cropLibrary.map((crop) => crop.id),
+  const [setupFarmData, setSetupFarmData] = useState<SetupFarmData>(initialSetupFarmData)
+  const [selectedCropIds, setSelectedCropIds] = useState<CropId[]>(initialSelectedCropIds)
+  const [goalData, setGoalData] = useState<GoalData>(
+    createInitialGoalData(initialSetupFarmData, initialSelectedCropIds),
   )
-  const [goalData, setGoalData] = useState<GoalData>(createInitialGoalData)
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlanData | null>(null)
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([])
 
@@ -191,6 +212,10 @@ function App() {
         onBackToSetup={() => setPage('setup-farm')}
         onContinue={(nextSelectedCropIds) => {
           setSelectedCropIds(nextSelectedCropIds)
+          setGoalData((prev) => ({
+            ...prev,
+            cropGoals: createBalancedCropGoals(setupFarmData, nextSelectedCropIds),
+          }))
           setGeneratedPlan(null)
           setPage('define-goal')
         }}
@@ -205,6 +230,10 @@ function App() {
         onBackToWelcome={() => setPage('welcome')}
         onContinue={(nextSetupFarmData) => {
           setSetupFarmData(nextSetupFarmData)
+          setGoalData((prev) => ({
+            ...prev,
+            cropGoals: createBalancedCropGoals(nextSetupFarmData, selectedCropIds),
+          }))
           setGeneratedPlan(null)
           setPage('select-crops')
         }}

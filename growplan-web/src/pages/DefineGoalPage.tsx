@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronDown, Goal, ShieldCheck, Sparkles } from 'lucide-react'
 import { AppHeader } from '../components/AppHeader'
 import { SetupProgress } from '../components/SetupProgress'
@@ -17,6 +17,17 @@ type DefineGoalPageProps = {
 }
 
 const planningOptions = ['4 weeks', '8 weeks', '12 weeks', '16 weeks']
+const GOAL_DECIMAL_STEP = 0.1
+
+const floorToGoalStep = (value: number) => {
+  const floored = Math.floor(value / GOAL_DECIMAL_STEP) * GOAL_DECIMAL_STEP
+  return Number(floored.toFixed(1))
+}
+
+const roundToGoalStep = (value: number) => {
+  const rounded = Math.round(value / GOAL_DECIMAL_STEP) * GOAL_DECIMAL_STEP
+  return Number(rounded.toFixed(1))
+}
 
 export function DefineGoalPage({
   farm,
@@ -28,6 +39,8 @@ export function DefineGoalPage({
   const [planningHorizon, setPlanningHorizon] = useState(initialGoalData.planningHorizon)
   const [priority, setPriority] = useState<GoalPriority>(initialGoalData.priority)
   const [cropGoals, setCropGoals] = useState<CropGoalsById>(initialGoalData.cropGoals)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const shouldClearSubmitErrorRef = useRef(false)
 
   const selectedCrops = useMemo(
     () => cropLibrary.filter((crop) => selectedCropIds.includes(crop.id)),
@@ -69,13 +82,42 @@ export function DefineGoalPage({
       exceeded: requiredGridPerWeek > availableCapacityPerWeek,
     }
   }, [availableCapacityPerWeek, cropGoals, selectedCrops])
-  const capacityUsagePercent = useMemo(() => {
+  const capacityUsageRawPercent = useMemo(() => {
     if (capacityState.availableCapacityPerWeek === 0) return 0
-    return Math.round(
-      (capacityState.requiredGridPerWeek / capacityState.availableCapacityPerWeek) * 100,
-    )
+    return (capacityState.requiredGridPerWeek / capacityState.availableCapacityPerWeek) * 100
   }, [capacityState.availableCapacityPerWeek, capacityState.requiredGridPerWeek])
-  const capacityBarPercent = Math.min(100, capacityUsagePercent)
+  const capacityBarPercent = Math.min(100, capacityUsageRawPercent)
+  const capacityGap = Math.max(
+    0,
+    capacityState.availableCapacityPerWeek - capacityState.requiredGridPerWeek,
+  )
+  const isCapacityFull =
+    !capacityState.exceeded &&
+    capacityState.availableCapacityPerWeek > 0 &&
+    capacityGap <= 0.05
+  const capacityUsageDisplayPercent = isCapacityFull
+    ? 100
+    : Math.min(99.9, Math.floor(capacityUsageRawPercent * 10) / 10)
+  const capacityUsageDisplayText = capacityUsageDisplayPercent.toFixed(1).replace(/\.0$/, '')
+
+  useEffect(() => {
+    if (isCapacityFull && submitError) {
+      setSubmitError(null)
+    }
+  }, [isCapacityFull, submitError])
+
+  useEffect(() => {
+    if (!submitError || !shouldClearSubmitErrorRef.current) return
+    shouldClearSubmitErrorRef.current = false
+    setSubmitError(null)
+  }, [cropGoals, submitError])
+
+  const getCapacityErrorMessage = () => {
+    if (capacityState.exceeded) {
+      return 'Please decrease the Goal/week or Reserve to fit available capacity.'
+    }
+    return 'Please increase the Goal/week or Reserve to reach maximum space utilization.'
+  }
 
   const planPreview = useMemo(
     () =>
@@ -111,7 +153,7 @@ export function DefineGoalPage({
   const getMaxTargetForCrop = (cropId: CropId) => {
     const crop = selectedCropById.get(cropId)
     if (!crop) return 0
-    return Math.max(0, Math.floor(availableCapacityPerWeek * crop.yieldPerGrid))
+    return Math.max(0, floorToGoalStep(availableCapacityPerWeek * crop.yieldPerGrid))
   }
 
   const getRemainingMaxTargetForCrop = (cropId: CropId, goals: CropGoalsById) => {
@@ -128,7 +170,7 @@ export function DefineGoalPage({
     }, 0)
 
     const remainingCapacity = Math.max(0, availableCapacityPerWeek - requiredWithoutCrop)
-    return Math.max(0, Math.floor((remainingCapacity * crop.yieldPerGrid) / multiplier))
+    return Math.max(0, floorToGoalStep((remainingCapacity * crop.yieldPerGrid) / multiplier))
   }
 
   const getMaxReserveForCrop = (cropId: CropId, goals: CropGoalsById) => {
@@ -151,7 +193,8 @@ export function DefineGoalPage({
   }
 
   const updateTarget = (cropId: CropId, nextValue: number) => {
-    const desiredTarget = Math.max(0, nextValue || 0)
+    const desiredTarget = Math.max(0, roundToGoalStep(nextValue || 0))
+    shouldClearSubmitErrorRef.current = true
     setCropGoals((prev) => {
       const maxTarget = getRemainingMaxTargetForCrop(cropId, prev)
       return {
@@ -166,6 +209,7 @@ export function DefineGoalPage({
 
   const updateReserve = (cropId: CropId, nextValue: number) => {
     const desiredReserve = Math.max(0, nextValue || 0)
+    shouldClearSubmitErrorRef.current = true
     setCropGoals((prev) => {
       const maxReserve = getMaxReserveForCrop(cropId, prev)
       const safeReserve = Math.min(desiredReserve, maxReserve)
@@ -189,6 +233,11 @@ export function DefineGoalPage({
       .slice(0, 2) || 'GF'
 
   const handleContinue = () => {
+    if (!isCapacityFull) {
+      setSubmitError(getCapacityErrorMessage())
+      return
+    }
+    setSubmitError(null)
     onContinue({
       planningHorizon,
       priority,
@@ -217,6 +266,43 @@ export function DefineGoalPage({
                   const maxTarget = getMaxTargetForCrop(crop.id)
                   const remainingMaxTarget = getRemainingMaxTargetForCrop(crop.id, cropGoals)
                   const maxReserve = getMaxReserveForCrop(crop.id, cropGoals)
+                  const safeMaxTarget = Math.max(maxTarget, GOAL_DECIMAL_STEP)
+                  const currentTargetPercent = Math.min(
+                    100,
+                    (Math.max(0, config.targetPerWeek) / safeMaxTarget) * 100,
+                  )
+                  const remainingTargetPercent = Math.min(
+                    100,
+                    (Math.max(config.targetPerWeek, remainingMaxTarget) / safeMaxTarget) * 100,
+                  )
+                  const lightSegmentPercent = Math.max(0, remainingTargetPercent - currentTargetPercent)
+                  const minimumVisibleLightPercent = 7.5
+                  const remainingTargetVisualPercent =
+                    lightSegmentPercent > 0 && lightSegmentPercent < minimumVisibleLightPercent
+                      ? Math.min(100, currentTargetPercent + minimumVisibleLightPercent)
+                      : remainingTargetPercent
+                  const goalTargetRangeStyle = {
+                    '--target-fill-current': `${currentTargetPercent}%`,
+                    '--target-fill-remaining': `${remainingTargetPercent}%`,
+                    '--target-fill-remaining-visual': `${remainingTargetVisualPercent}%`,
+                  } as CSSProperties
+                  const safeReserveMax = Math.max(config.reservePercent, Math.max(0, maxReserve))
+                  const currentReservePercent = Math.min(100, (Math.max(0, config.reservePercent) / 50) * 100)
+                  const remainingReservePercent = Math.min(100, (safeReserveMax / 50) * 100)
+                  const lightReserveSegmentPercent = Math.max(
+                    0,
+                    remainingReservePercent - currentReservePercent,
+                  )
+                  const minimumVisibleReservePercent = 7.5
+                  const remainingReserveVisualPercent =
+                    lightReserveSegmentPercent > 0 && lightReserveSegmentPercent < minimumVisibleReservePercent
+                      ? Math.min(100, currentReservePercent + minimumVisibleReservePercent)
+                      : remainingReservePercent
+                  const reserveRangeStyle = {
+                    '--reserve-fill-current': `${currentReservePercent}%`,
+                    '--reserve-fill-remaining': `${remainingReservePercent}%`,
+                    '--reserve-fill-remaining-visual': `${remainingReserveVisualPercent}%`,
+                  } as CSSProperties
 
                   return (
                     <article key={crop.id} className="crop-goal-item">
@@ -235,19 +321,21 @@ export function DefineGoalPage({
                           <label>
                             <span className="goal-slider-head">
                               Goal / week
-                              <strong>{config.targetPerWeek} kg</strong>
+                              <strong>{config.targetPerWeek.toFixed(1)} kg</strong>
                             </span>
                             <input
+                              className="goal-range-target"
                               type="range"
                               min={0}
                               max={maxTarget}
-                              step={1}
+                              step={GOAL_DECIMAL_STEP}
                               value={config.targetPerWeek}
+                              style={goalTargetRangeStyle}
                               onChange={(event) => updateTarget(crop.id, Number(event.target.value))}
                             />
                             <span className="goal-slider-scale">
                               <small>0 kg</small>
-                              <small>Available {remainingMaxTarget} kg/week</small>
+                              <small>Available {remainingMaxTarget.toFixed(1)} kg/week</small>
                             </span>
                           </label>
                           <label>
@@ -256,11 +344,13 @@ export function DefineGoalPage({
                               <strong>{config.reservePercent}%</strong>
                             </span>
                             <input
+                              className="goal-range-reserve"
                               type="range"
                               min={0}
                               max={50}
                               step={1}
                               value={config.reservePercent}
+                              style={reserveRangeStyle}
                               onChange={(event) => updateReserve(crop.id, Number(event.target.value))}
                             />
                             <span className="goal-slider-scale">
@@ -323,7 +413,14 @@ export function DefineGoalPage({
               </section>
             </div>
 
-            <StepActions onBack={onBackToSelectCrops} onNext={handleContinue} nextLabel="Generate Plan" />
+            <StepActions
+              onBack={onBackToSelectCrops}
+              onNext={handleContinue}
+              onNextDisabledAttempt={() => setSubmitError(getCapacityErrorMessage())}
+              nextHint={submitError}
+              nextLabel="Generate Plan"
+              nextDisabled={!isCapacityFull}
+            />
           </section>
 
           <aside className="goal-summary-card">
@@ -334,7 +431,7 @@ export function DefineGoalPage({
                 <Goal size={22} />
                 <div>
                   <p>Total target</p>
-                  <strong>{totalTargetPerWeek} kg / week</strong>
+                  <strong>{totalTargetPerWeek.toFixed(1)} kg / week</strong>
                   <small>Across {selectedCrops.length} selected crops</small>
                 </div>
               </article>
@@ -372,15 +469,17 @@ export function DefineGoalPage({
               </article>
             </div>
 
-            <div className={`goal-alert ${capacityState.exceeded ? 'warning' : 'ok'}`}>
+            <div className={`goal-alert ${isCapacityFull ? 'ok' : 'warning'}`}>
               <p>
                 {capacityState.exceeded
                   ? 'Capacity constraints detected'
-                  : 'Capacity is within range'}
+                  : isCapacityFull
+                    ? 'Capacity is fully utilized'
+                    : 'Capacity is not fully utilized'}
               </p>
               <div className="capacity-progress" aria-label="Farm capacity usage">
                 <div className="capacity-progress-meta">
-                  <strong>{capacityUsagePercent}% used</strong>
+                  <strong>{capacityUsageDisplayText}% used</strong>
                   <span>{capacityState.availableCapacityPerWeek} grids/week capacity</span>
                 </div>
                 <div className="capacity-progress-track">
@@ -394,6 +493,11 @@ export function DefineGoalPage({
                 Required ~{capacityState.requiredGridPerWeek.toFixed(0)} grids/week vs available{' '}
                 {capacityState.availableCapacityPerWeek} grids/week.
               </span>
+              {!isCapacityFull && !capacityState.exceeded ? (
+                <span>
+                  Add ~{capacityGap.toFixed(1)} more grid/week usage to unlock Generate Plan.
+                </span>
+              ) : null}
             </div>
 
             <div

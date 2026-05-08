@@ -28,6 +28,9 @@ The wizard should feel stable and deterministic. The demo Copilot should appear 
 ## Latest Interaction Updates (May 3, 2026)
 
 - `Define Goal` now uses sliders for both `Goal / week (kg)` and `Reserve (%)` per crop.
+- `Goal / week (kg)` should be a decimal demand target; execution quantities remain integer grids, plants, and seedlings.
+- Initial `Goal / week` defaults are balanced from farm capacity so selected crops use roughly equal grid area.
+- Initial `Reserve (%)` uses a shared 10% default across selected crops.
 - Goal slider scale is stable and does not shift when reserve changes.
 - Reserve slider is clamped by remaining capacity at interaction time, while keeping goal unchanged.
 - Goal summary includes a capacity progress bar and warning state when required grids approach limits.
@@ -311,7 +314,7 @@ Main UI:
 
 - Wizard sidebar progress
 - Per-selected-crop goal inputs
-  - Goal per week (kg) slider
+  - Goal per week (kg) slider with decimal support
   - Reserve percentage (%) slider
 - Estimated seedlings needed per week
 - Planning horizon
@@ -323,13 +326,26 @@ Main UI:
 Recommended defaults:
 
 ```text
-Lettuce: 200 kg/week, reserve 15%
-Basil: 120 kg/week, reserve 20%
-Kale: 160 kg/week, reserve 12%
-Mint: 90 kg/week, reserve 18%
+Goal / week: auto-balanced from farm capacity and selected crops
+Reserve: 10% for every selected crop
 Planning horizon: 8 weeks
 Optimization priority: Maximize space utilization
 Seedling estimates: derived from target, reserve, and crop yield per plant
+```
+
+Default balancing behavior:
+
+```text
+availableGridCapacity = farm.rows * farm.columns
+selectedCropCount = number of selected crops
+gridSharePerCrop = availableGridCapacity / selectedCropCount
+
+For each selected crop:
+  reservePercent = 10
+  targetKgPerWeek = (gridSharePerCrop * crop.yieldPerGrid) / (1 + reservePercent / 100)
+
+Goal / week can be decimal because it represents weekly demand in kg.
+Execution quantities such as grids, plants, and seedlings should be rounded to integers later.
 ```
 
 Example goal JSON:
@@ -339,10 +355,10 @@ Example goal JSON:
   "planningHorizon": "8 weeks",
   "priority": "maximize-space",
   "cropGoals": {
-    "lettuce": { "targetPerWeek": 200, "reservePercent": 15 },
-    "basil": { "targetPerWeek": 120, "reservePercent": 20 },
-    "kale": { "targetPerWeek": 160, "reservePercent": 12 },
-    "mint": { "targetPerWeek": 90, "reservePercent": 18 }
+    "lettuce": { "targetPerWeek": 32.7, "reservePercent": 10 },
+    "basil": { "targetPerWeek": 16.4, "reservePercent": 10 },
+    "kale": { "targetPerWeek": 38.2, "reservePercent": 10 },
+    "mint": { "targetPerWeek": 13.6, "reservePercent": 10 }
   },
   "seedlingAssumptions": {
     "lettuce": { "yieldPerPlantKg": 0.18, "seedlingDays": 14 },
@@ -420,6 +436,11 @@ If the priority is maximize utilization:
 
 If the priority is minimize stockout risk:
   allocate more space to high-reserve / high-priority crops while still keeping 100% occupancy
+
+For default goals:
+  balance selected crops by equal grid share, not equal kg/week
+  allow decimal kg/week demand targets
+  keep grid, plant, and seedling execution quantities as integers
 
 For each selected crop:
   seedlingsPerWeek = ceil(targetKgPerWeek / yieldPerPlantKg)
