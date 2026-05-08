@@ -279,7 +279,7 @@ export function DashboardPage({
                 ? `Risk: suspected disease in ${primaryCropName.toLowerCase()} Zone B`
                 : 'Monitoring crop health signals...'}
             </p>
-            <strong>{isRiskReady ? 'Containment re-plan suggested' : 'Waiting for incident signal'}</strong>
+            <strong>{isRiskReady ? 'Click Here to Replan !' : 'Waiting for incident signal'}</strong>
           </button>
         </section>
 

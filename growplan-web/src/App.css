@@ -2648,6 +2648,7 @@
 }
 
 .dashboard-nav button {
+  position: relative;
   width: 100%;
   border: 1px solid transparent;
   border-radius: 10px;
@@ -2673,6 +2674,43 @@
 
 .dashboard-nav button.tab-key-work-schedule svg {
   color: #179452;
+}
+
+.dashboard-nav button.tab-key-overview::before,
+.dashboard-nav button.tab-key-work-schedule::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 140ms ease;
+}
+
+.dashboard-nav button.tab-key-overview:hover,
+.dashboard-nav button.tab-key-overview:focus-visible {
+  background: #f3f8fe;
+  border-color: #d6e4f3;
+  color: #216ea6;
+}
+
+.dashboard-nav button.tab-key-work-schedule:hover,
+.dashboard-nav button.tab-key-work-schedule:focus-visible {
+  background: #eff9f3;
+  border-color: #cce4d6;
+  color: #137d46;
+}
+
+.dashboard-nav button.tab-key-overview:hover::before,
+.dashboard-nav button.tab-key-overview:focus-visible::before {
+  background: #2d7ab4;
+}
+
+.dashboard-nav button.tab-key-work-schedule:hover::before,
+.dashboard-nav button.tab-key-work-schedule:focus-visible::before {
+  background: #179452;
 }
 
 .dashboard-nav button.active.tab-key-overview {
