@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   Grid3X3,
+  Leaf,
   Plus,
   Search,
   Sprout,
@@ -18,6 +19,11 @@ type SelectCropsPageProps = {
   selectedCropIds: CropId[]
   onBackToSetup: () => void
   onContinue: (selectedCropIds: CropId[]) => void
+}
+
+const categoryIconByCrop: Record<CropCategory, typeof Sprout> = {
+  'Leafy Green': Leaf,
+  Herb: Sprout,
 }
 
 export function SelectCropsPage({
@@ -102,11 +108,12 @@ export function SelectCropsPage({
             <div className="crop-card-grid">
               {visibleCrops.map((crop) => {
                 const isSelected = selectedCropIds.includes(crop.id)
+                const CategoryIcon = categoryIconByCrop[crop.category]
 
                 return (
                   <article key={crop.id} className={`crop-card ${isSelected ? 'selected' : ''}`}>
                     <div className="crop-thumb" style={{ backgroundColor: crop.accent }}>
-                      <Sprout size={28} />
+                      <CategoryIcon size={28} />
                     </div>
                     <h3>{crop.name}</h3>
                     <span className="crop-chip">{crop.category}</span>
@@ -142,32 +149,35 @@ export function SelectCropsPage({
             <p>Review your selected crops. You can remove crops or add more from the library.</p>
 
             <div className="selected-list">
-              {selectedCrops.map((crop) => (
-                <article key={crop.id} className="selected-item">
-                  <div className="selected-thumb" style={{ backgroundColor: crop.accent }}>
-                    <Sprout size={18} />
-                  </div>
-                  <div>
-                    <h3>{crop.name}</h3>
-                    <small>{crop.category}</small>
-                    <p>
-                      <Timer size={12} />
-                      {crop.growthDays}
-                      <span className="dot-sep">|</span>
-                      <Grid3X3 size={12} />
-                      {crop.yieldPerGrid.toFixed(1)} kg / grid
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="remove-selected"
-                    onClick={() => removeCrop(crop.id)}
-                    aria-label={`Remove ${crop.name}`}
-                  >
-                    <X size={14} />
-                  </button>
-                </article>
-              ))}
+              {selectedCrops.map((crop) => {
+                const CategoryIcon = categoryIconByCrop[crop.category]
+                return (
+                  <article key={crop.id} className="selected-item">
+                    <div className="selected-thumb" style={{ backgroundColor: crop.accent }}>
+                      <CategoryIcon size={18} />
+                    </div>
+                    <div>
+                      <h3>{crop.name}</h3>
+                      <small>{crop.category}</small>
+                      <p>
+                        <Timer size={12} />
+                        {crop.growthDays}
+                        <span className="dot-sep">|</span>
+                        <Grid3X3 size={12} />
+                        {crop.yieldPerGrid.toFixed(1)} kg / grid
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="remove-selected"
+                      onClick={() => removeCrop(crop.id)}
+                      aria-label={`Remove ${crop.name}`}
+                    >
+                      <X size={14} />
+                    </button>
+                  </article>
+                )
+              })}
             </div>
 
             <div className="selected-summary">
