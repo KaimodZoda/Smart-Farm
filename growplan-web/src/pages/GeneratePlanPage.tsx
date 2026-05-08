@@ -95,6 +95,19 @@ export function GeneratePlanPage({
   )
 
   const allAnalysisDone = activeStepIndex >= analysisBlueprint.length
+  const activeAnalysisLabel =
+    analysisBlueprint[Math.min(activeStepIndex, analysisBlueprint.length - 1)]?.label ??
+    'Finalizing plan'
+  const previewSectionBlueprint = useMemo(
+    () => [
+      { key: 'grid', label: 'Grid Allocation Preview', loadingLabel: 'Preparing grid allocation' },
+      { key: 'timeline', label: 'Harvest Timeline', loadingLabel: 'Projecting harvest windows' },
+      { key: 'nursery', label: 'Nursery Load', loadingLabel: 'Simulating nursery pressure' },
+      { key: 'metrics', label: 'Plan Metrics', loadingLabel: 'Computing business metrics' },
+      { key: 'risk', label: 'Risk Summary', loadingLabel: 'Finalizing capacity risk summary' },
+    ] as const,
+    [],
+  )
   const analysisSteps = analysisBlueprint.map((step, index) => {
     const progress = analysisProgress[index] ?? 0
     const status =
@@ -103,6 +116,19 @@ export function GeneratePlanPage({
       ...step,
       progress,
       status: allAnalysisDone ? ('done' as const) : status,
+    }
+  })
+  const previewSections = previewSectionBlueprint.map((section, index) => {
+    const progress = analysisProgress[index] ?? 0
+    const isVisible = allAnalysisDone || index <= activeStepIndex
+    const isComplete = allAnalysisDone || index < activeStepIndex || progress >= 92
+    const status = isComplete ? 'done' : isVisible ? 'running' : 'pending'
+    return {
+      ...section,
+      progress,
+      isVisible,
+      isComplete,
+      status,
     }
   })
 
@@ -178,132 +204,166 @@ export function GeneratePlanPage({
             />
           </section>
 
-          <aside className={`generate-preview-card ${allAnalysisDone ? '' : 'processing'}`}>
+          <aside className="generate-preview-card">
             <header>
               <h2>Draft Plan Preview</h2>
-              <p>{allAnalysisDone ? 'Grid allocation preview' : 'Processing...'}</p>
+              <p>{allAnalysisDone ? 'Ready to review' : `Processing: ${activeAnalysisLabel}`}</p>
             </header>
 
-            <div className="generate-legend">
-              {selectedCrops.map((crop) => (
-                <span key={crop.id}>
-                  <b style={{ backgroundColor: crop.accent }}></b>
-                  {crop.name}
-                </span>
-              ))}
-            </div>
+            <div className="generate-preview-stack" aria-live="polite">
+              {previewSections.map((section) => {
+                if (!section.isVisible) return null
 
-            <div
-              className="generate-grid"
-              style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, minmax(0, 1fr))` }}
-            >
-              {resolvedPlan.cells.map((cell, index) => (
-                <span
-                  key={index}
-                  className="generate-grid-cell"
-                  style={{ backgroundColor: cell.color }}
-                  title={cell.label}
-                ></span>
-              ))}
-            </div>
+                return (
+                  <section key={section.key} className={`generate-preview-section ${section.status}`}>
+                    <header>
+                      <h3>{section.label}</h3>
+                      <span>
+                        {section.isComplete ? 'Ready' : `${section.progress.toFixed(0)}%`}
+                      </span>
+                    </header>
 
-            <div className="mini-timeline">
-              <h3>Mini Harvest Timeline</h3>
-              <div className="mini-months">
-                {['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((month) => (
-                  <span key={month}>{month}</span>
-                ))}
-              </div>
-              <div className="mini-rows">
-                {selectedCrops.map((crop, idx) => {
-                  const start = (idx % 3) + 1
-                  const span = 2 + (idx % 2)
-                  return (
-                    <article key={crop.id} className="mini-row">
-                      <small>{crop.name}</small>
-                      <div className="mini-row-track">
-                        <span
-                          style={{
-                            gridColumn: `${start} / span ${span}`,
-                            backgroundColor: crop.accent,
-                          }}
-                        ></span>
+                    {!section.isComplete ? (
+                      <div className="generate-section-placeholder">
+                        <p>{section.loadingLabel}</p>
+                        <div className="generate-section-skeleton">
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                        </div>
                       </div>
-                    </article>
-                  )
-                })}
-              </div>
-            </div>
+                    ) : null}
 
-            <div className="mini-timeline nursery-mini-timeline">
-              <h3>Nursery Load</h3>
-              <div className="mini-months">
-                {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
-                  <span key={item.week}>W{item.week}</span>
-                ))}
-              </div>
-              <div className="mini-rows nursery-mini-rows">
-                <article className="mini-row nursery-load-row">
-                  <small>Active</small>
-                  <div className="mini-row-track">
-                    {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
-                      <span
-                        key={item.week}
-                        className={`nursery-load-bar risk-${item.risk.toLowerCase()}`}
-                        style={{ gridColumn: `${item.week} / span 1` }}
-                        title={`${item.activeSeedlings} seedlings in Week ${item.week}`}
-                      ></span>
-                    ))}
-                  </div>
-                </article>
-              </div>
-              <div className="nursery-batch-list">
-                {resolvedPlan.cropSummaries.map((summary) => (
-                  <article key={summary.cropId}>
-                    <b style={{ backgroundColor: summary.color }}></b>
-                    <span>{summary.label}</span>
-                    <strong>{summary.seedlingsPerWeek}/week</strong>
-                  </article>
-                ))}
-              </div>
-            </div>
+                    {section.isComplete && section.key === 'grid' ? (
+                      <>
+                        <div className="generate-legend">
+                          {selectedCrops.map((crop) => (
+                            <span key={crop.id}>
+                              <b style={{ backgroundColor: crop.accent }}></b>
+                              {crop.name}
+                            </span>
+                          ))}
+                        </div>
+                        <div
+                          className="generate-grid"
+                          style={{ gridTemplateColumns: `repeat(${resolvedPlan.columns}, minmax(0, 1fr))` }}
+                        >
+                          {resolvedPlan.cells.map((cell, index) => (
+                            <span
+                              key={index}
+                              className="generate-grid-cell"
+                              style={{ backgroundColor: cell.color }}
+                              title={cell.label}
+                            ></span>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
 
-            <div className="generate-metrics">
-              <article>
-                <p>Utilization</p>
-                <strong>{resolvedPlan.utilizationPercent}%</strong>
-              </article>
-              <article>
-                <p>Stockout risk</p>
-                <strong>{resolvedPlan.stockoutRisk}</strong>
-              </article>
-              <article>
-                <p>Expected revenue</p>
-                <strong>${(resolvedPlan.expectedRevenue / 1000).toFixed(1)}k</strong>
-              </article>
-              <article>
-                <p>Nursery risk</p>
-                <strong>{resolvedPlan.seedlingCapacityRisk}</strong>
-              </article>
-            </div>
+                    {section.isComplete && section.key === 'timeline' ? (
+                      <div className="mini-timeline">
+                        <h3>Mini Harvest Timeline</h3>
+                        <div className="mini-months">
+                          {['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((month) => (
+                            <span key={month}>{month}</span>
+                          ))}
+                        </div>
+                        <div className="mini-rows">
+                          {selectedCrops.map((crop, idx) => {
+                            const start = (idx % 3) + 1
+                            const span = 2 + (idx % 2)
+                            return (
+                              <article key={crop.id} className="mini-row">
+                                <small>{crop.name}</small>
+                                <div className="mini-row-track">
+                                  <span
+                                    style={{
+                                      gridColumn: `${start} / span ${span}`,
+                                      backgroundColor: crop.accent,
+                                    }}
+                                  ></span>
+                                </div>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
 
-            <div className="generate-note">
-              <ShieldCheck size={16} />
-              Required {resolvedPlan.requiredCapacity.toFixed(0)} grids/week vs available{' '}
-              {resolvedPlan.availableCapacity} grids/week.
-            </div>
+                    {section.isComplete && section.key === 'nursery' ? (
+                      <div className="mini-timeline nursery-mini-timeline">
+                        <h3>Nursery Load</h3>
+                        <div className="mini-months">
+                          {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                            <span key={item.week}>W{item.week}</span>
+                          ))}
+                        </div>
+                        <div className="mini-rows nursery-mini-rows">
+                          <article className="mini-row nursery-load-row">
+                            <small>Active</small>
+                            <div className="mini-row-track">
+                              {resolvedPlan.nurseryLoad.slice(0, 8).map((item) => (
+                                <span
+                                  key={item.week}
+                                  className={`nursery-load-bar risk-${item.risk.toLowerCase()}`}
+                                  style={{ gridColumn: `${item.week} / span 1` }}
+                                  title={`${item.activeSeedlings} seedlings in Week ${item.week}`}
+                                ></span>
+                              ))}
+                            </div>
+                          </article>
+                        </div>
+                        <div className="nursery-batch-list">
+                          {resolvedPlan.cropSummaries.map((summary) => (
+                            <article key={summary.cropId}>
+                              <b style={{ backgroundColor: summary.color }}></b>
+                              <span>{summary.label}</span>
+                              <strong>{summary.seedlingsPerWeek}/week</strong>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
-            <div className={`generate-note ${resolvedPlan.seedlingCapacityRisk === 'High' ? 'warn' : ''}`}>
-              <Waves size={16} />
-              Peak nursery load {Math.max(...resolvedPlan.nurseryLoad.map((item) => item.activeSeedlings), 0)} seedlings vs capacity{' '}
-              {farm.nurseryCapacity}.
+                    {section.isComplete && section.key === 'metrics' ? (
+                      <div className="generate-metrics">
+                        <article>
+                          <p>Utilization</p>
+                          <strong>{resolvedPlan.utilizationPercent}%</strong>
+                        </article>
+                        <article>
+                          <p>Stockout risk</p>
+                          <strong>{resolvedPlan.stockoutRisk}</strong>
+                        </article>
+                        <article>
+                          <p>Expected revenue</p>
+                          <strong>${(resolvedPlan.expectedRevenue / 1000).toFixed(1)}k</strong>
+                        </article>
+                        <article>
+                          <p>Nursery risk</p>
+                          <strong>{resolvedPlan.seedlingCapacityRisk}</strong>
+                        </article>
+                      </div>
+                    ) : null}
+
+                    {section.isComplete && section.key === 'risk' ? (
+                      <>
+                        <div className="generate-note">
+                          <ShieldCheck size={16} />
+                          Required {resolvedPlan.requiredCapacity.toFixed(0)} grids/week vs available{' '}
+                          {resolvedPlan.availableCapacity} grids/week.
+                        </div>
+                        <div className={`generate-note ${resolvedPlan.seedlingCapacityRisk === 'High' ? 'warn' : ''}`}>
+                          <Waves size={16} />
+                          Peak nursery load {Math.max(...resolvedPlan.nurseryLoad.map((item) => item.activeSeedlings), 0)} seedlings vs capacity{' '}
+                          {farm.nurseryCapacity}.
+                        </div>
+                      </>
+                    ) : null}
+                  </section>
+                )
+              })}
             </div>
-            {!allAnalysisDone ? (
-              <div className="generate-preview-overlay" aria-live="polite">
-                <LoaderCircle size={18} className="spin" />
-                Draft plan is processing...
-              </div>
-            ) : null}
           </aside>
         </section>
       </section>

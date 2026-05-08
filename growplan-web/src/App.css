@@ -1767,7 +1767,8 @@
 }
 
 .generate-preview-card.processing > *:not(.generate-preview-overlay) {
-  opacity: 0.45;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .generate-preview-overlay {
@@ -1776,11 +1777,77 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: rgba(247, 250, 248, 0.82);
+  background: #f7faf8;
   color: #1a3650;
-  font-size: 0.98rem;
+  padding: 16px;
+}
+
+.generate-preview-thinking {
+  width: min(360px, 100%);
+  border: 1px solid #d5e3db;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 8px 20px rgba(17, 48, 31, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.generate-preview-thinking-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generate-preview-thinking-head p {
+  margin: 0;
+  color: #1a3650;
+  font-size: 0.95rem;
   font-weight: 700;
+}
+
+.generate-preview-thinking-step {
+  margin: 0;
+  color: #3f5f72;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.generate-preview-skeleton {
+  display: grid;
+  gap: 7px;
+}
+
+.generate-preview-skeleton span {
+  display: block;
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #deebe3 0%, #edf5f0 50%, #deebe3 100%);
+  background-size: 220% 100%;
+  animation: thinkingShimmer 1.35s ease-in-out infinite;
+}
+
+.generate-preview-skeleton span:nth-child(1) {
+  width: 100%;
+}
+
+.generate-preview-skeleton span:nth-child(2) {
+  width: 86%;
+  animation-delay: 0.12s;
+}
+
+.generate-preview-skeleton span:nth-child(3) {
+  width: 72%;
+  animation-delay: 0.24s;
+}
+
+@keyframes thinkingShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .generate-preview-card header p {
@@ -1910,8 +1977,90 @@
   color: #607384;
 }
 
+.generate-preview-stack {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.generate-preview-section {
+  border: 1px solid #dce6e0;
+  border-radius: 8px;
+  background: #fdfefd;
+  padding: 10px;
+}
+
+.generate-preview-section > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.generate-preview-section > header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #243e51;
+}
+
+.generate-preview-section > header span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5f7688;
+}
+
+.generate-preview-section.running {
+  border-color: #b9d7c6;
+  box-shadow: inset 0 0 0 1px rgba(45, 165, 93, 0.08);
+}
+
+.generate-preview-section.done > header span {
+  color: #147a46;
+}
+
+.generate-section-placeholder {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.generate-section-placeholder p {
+  margin: 0;
+  color: #4f6879;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.generate-section-skeleton {
+  display: grid;
+  gap: 6px;
+}
+
+.generate-section-skeleton span {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e0ece5 0%, #f1f7f3 50%, #e0ece5 100%);
+  background-size: 220% 100%;
+  animation: thinkingShimmer 1.25s ease-in-out infinite;
+}
+
+.generate-section-skeleton span:nth-child(1) {
+  width: 100%;
+}
+
+.generate-section-skeleton span:nth-child(2) {
+  width: 84%;
+  animation-delay: 0.12s;
+}
+
+.generate-section-skeleton span:nth-child(3) {
+  width: 68%;
+  animation-delay: 0.24s;
+}
+
 .generate-legend {
-  margin-top: 12px;
+  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
@@ -1937,7 +2086,7 @@
 }
 
 .generate-grid {
-  margin-top: 10px;
+  margin-top: 8px;
   border: 1px solid #d9e7df;
   border-radius: 8px;
   padding: 8px;
@@ -1957,7 +2106,7 @@
 }
 
 .mini-timeline {
-  margin-top: 12px;
+  margin-top: 8px;
   border: 1px solid #dce6e0;
   border-radius: 8px;
   padding: 12px;
@@ -2059,7 +2208,7 @@
 }
 
 .generate-metrics {
-  margin-top: 12px;
+  margin-top: 8px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
@@ -2085,7 +2234,7 @@
 }
 
 .generate-note {
-  margin-top: 10px;
+  margin-top: 8px;
   border: 1px solid #d2e5d9;
   border-radius: 8px;
   padding: 10px;
